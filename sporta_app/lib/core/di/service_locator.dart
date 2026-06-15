@@ -4,6 +4,8 @@ import 'package:get_it/get_it.dart';
 import '../../features/courts/data/court_repository.dart';
 import '../../features/courts/presentation/cubit/book_court/book_court_cubit.dart';
 import '../../features/courts/presentation/cubit/courts_list/courts_cubit.dart';
+import '../../features/level/data/level_repository.dart';
+import '../../features/level/presentation/cubit/level_cubit.dart';
 import '../network/api_client.dart';
 
 /// Global service locator. Register dependencies once in [setupLocator] (from
@@ -22,6 +24,9 @@ void setupLocator() {
   getIt.registerLazySingleton<CourtRepository>(
     () => CourtRepository(getIt<Dio>()),
   );
+  getIt.registerLazySingleton<LevelRepository>(
+    () => LevelRepository(getIt<Dio>()),
+  );
 
   // ── Cubits ─────────────────────────────────────────────────────────────────
   getIt.registerFactory<CourtsCubit>(
@@ -29,5 +34,8 @@ void setupLocator() {
   );
   getIt.registerFactory<BookCourtCubit>(
     () => BookCourtCubit(getIt<CourtRepository>()),
+  );
+  getIt.registerFactory<LevelCubit>(
+    () => LevelCubit(getIt<LevelRepository>()),
   );
 }
