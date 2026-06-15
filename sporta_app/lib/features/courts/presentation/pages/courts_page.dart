@@ -6,8 +6,11 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/widgets/gradient_page_header.dart';
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../data/courts_mock_data.dart';
+import '../../../../core/state/app_scope.dart';
+import '../../../auth/data/models/api_exception.dart';
+import '../../data/court_repository.dart';
 import '../../domain/entities/court_entity.dart';
+import '../courts_helpers.dart';
 
 class CourtsPage extends StatefulWidget {
   const CourtsPage({super.key, this.onBack, this.onNavigateToCourt});
@@ -32,8 +35,11 @@ class _CourtsPageState extends State<CourtsPage>
   String _ratingFilter = 'all';
   String _selectedDuration = 'all';
 
-  late List<CourtEntity> _courts;
-  late List<CourtEntity> _filtered;
+  final CourtRepository _repository = CourtRepository();
+  List<CourtEntity> _courts = [];
+  List<CourtEntity> _filtered = [];
+  bool _loading = true;
+  String? _error;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnim;
@@ -41,13 +47,34 @@ class _CourtsPageState extends State<CourtsPage>
   @override
   void initState() {
     super.initState();
-    _courts = List.from(mockCourts);
-    _filtered = List.from(_courts);
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
     _pulseAnim = Tween<double>(begin: 0.6, end: 1.0).animate(_pulseController);
+    _loadCourts();
+  }
+
+  Future<void> _loadCourts() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final courts = await _repository.fetchCourts();
+      if (!mounted) return;
+      setState(() {
+        _courts = courts;
+        _loading = false;
+      });
+      _applyFilters();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = e.localized(context.appSettings.language.isRtl);
+      });
+    }
   }
 
   @override
@@ -178,9 +205,13 @@ class _CourtsPageState extends State<CourtsPage>
       children: [
         if (_showFilters) _buildFilterPanel(),
         Expanded(
-          child: _filtered.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+                  ? _buildErrorState()
+                  : _filtered.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.builder(
                   padding: const EdgeInsets.all(AppSizes.pagePadding),
                   itemCount: _filtered.length,
                   itemBuilder: (context, index) => _CourtCard(
@@ -487,6 +518,43 @@ class _CourtsPageState extends State<CourtsPage>
         ),
       );
     });
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSizes.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.cloud_off_rounded,
+              size: 64,
+              color: AppColors.mutedForeground.withValues(alpha: 0.4),
+            ),
+            const SizedBox(height: AppSizes.lg),
+            Text(
+              _error ?? 'تعذّر تحميل الملاعب',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.body
+                  .copyWith(color: AppColors.mutedForeground),
+            ),
+            const SizedBox(height: AppSizes.lg),
+            ElevatedButton(
+              onPressed: _loadCourts,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                ),
+              ),
+              child: const Text('إعادة المحاولة'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildEmptyState() {

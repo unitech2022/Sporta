@@ -7,6 +7,7 @@ import '../core/state/app_scope.dart';
 import '../core/widgets/app_bottom_nav_bar.dart';
 import '../features/auth/presentation/state/auth_scope.dart';
 import '../features/coaches/presentation/pages/coaches_page.dart';
+import '../features/courts/presentation/pages/book_court_page.dart';
 import '../features/courts/presentation/pages/courts_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/level/presentation/pages/level_assessment_page.dart';
@@ -31,9 +32,21 @@ class _MainShellState extends State<MainShell> {
     const HomePage(),
     ProfilePage(onLogout: widget.onLogout),
     const MatchesPage(),
-    const CourtsPage(),
+    CourtsPage(onNavigateToCourt: _openBookCourt),
     const CoachesPage(),
   ];
+
+  void _openBookCourt(String courtId) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BookCourtPage(
+          courtId: courtId,
+          onBack: () => Navigator.of(context).pop(),
+          onComplete: () => Navigator.of(context).pop(),
+        ),
+      ),
+    );
+  }
 
   void _openLevelAssessment() {
     final sport = context.auth.user?.favoriteSport ?? 'padel';

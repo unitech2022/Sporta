@@ -4,8 +4,11 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/widgets/gradient_page_header.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../data/courts_mock_data.dart';
+import '../../../../core/state/app_scope.dart';
+import '../../../auth/data/models/api_exception.dart';
+import '../../data/court_repository.dart';
 import '../../domain/entities/court_entity.dart';
+import '../courts_helpers.dart';
 
 class BookCourtPage extends StatefulWidget {
   const BookCourtPage({
@@ -23,14 +26,24 @@ class BookCourtPage extends StatefulWidget {
 }
 
 class _BookCourtPageState extends State<BookCourtPage> {
+  final CourtRepository _repository = CourtRepository();
+
   late final List<DateTime> _dates;
   late final List<String> _timeSlots;
 
   CourtEntity? _court;
+  bool _loadingCourt = true;
+  String? _courtError;
+
   DateTime? _selectedDate;
   int? _selectedCourt;
   int? _selectedDuration;
   String? _selectedTime;
+
+  /// Booked slot times for the currently selected date.
+  Set<String> _bookedSlots = {};
+  bool _loadingSlots = false;
+  bool _submitting = false;
 
   static const List<String> _dayNames = [
     'الأحد',
@@ -57,14 +70,6 @@ class _BookCourtPageState extends State<BookCourtPage> {
     'ديسمبر',
   ];
 
-  static const Set<String> _bookedSlots = {
-    '08:00',
-    '10:00',
-    '14:00',
-    '18:00',
-    '20:00',
-  };
-
   @override
   void initState() {
     super.initState();
@@ -77,10 +82,56 @@ class _BookCourtPageState extends State<BookCourtPage> {
         return '${hour.toString().padLeft(2, '0')}:00';
       },
     );
-    if (widget.courtId != null) {
-      _court = findCourtById(widget.courtId!);
+    _loadCourt();
+  }
+
+  Future<void> _loadCourt() async {
+    final id = int.tryParse(widget.courtId ?? '');
+    if (id == null) {
+      setState(() {
+        _loadingCourt = false;
+        _courtError = 'الملعب غير موجود';
+      });
+      return;
     }
-    _court ??= mockCourts.first;
+    try {
+      final court = await _repository.fetchCourtById(id);
+      if (!mounted) return;
+      setState(() {
+        _court = court;
+        _loadingCourt = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadingCourt = false;
+        _courtError = e.localized(context.appSettings.language.isRtl);
+      });
+    }
+  }
+
+  Future<void> _loadAvailability(DateTime date) async {
+    final court = _court;
+    if (court == null) return;
+    setState(() {
+      _loadingSlots = true;
+      _bookedSlots = {};
+    });
+    try {
+      final slots = await _repository.fetchAvailability(court.numericId, date);
+      if (!mounted) return;
+      setState(() {
+        _bookedSlots = slots
+            .where((s) => s.isBooked)
+            .map((s) => s.time)
+            .toSet();
+        _loadingSlots = false;
+      });
+    } on ApiException {
+      if (!mounted) return;
+      // Fall back to treating all slots as available if availability fails.
+      setState(() => _loadingSlots = false);
+    }
   }
 
   bool get _allSelected =>
@@ -126,11 +177,19 @@ class _BookCourtPageState extends State<BookCourtPage> {
   @override
   Widget build(BuildContext context) {
     final court = _court;
-    if (court == null) {
+    if (_loadingCourt) {
       return const Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          body: Center(child: Text('الملعب غير موجود')),
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+    if (court == null) {
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          body: Center(child: Text(_courtError ?? 'الملعب غير موجود')),
         ),
       );
     }
@@ -291,6 +350,7 @@ class _BookCourtPageState extends State<BookCourtPage> {
                     _selectedDuration = null;
                     _selectedTime = null;
                   });
+                  _loadAvailability(date);
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
@@ -508,7 +568,13 @@ class _BookCourtPageState extends State<BookCourtPage> {
           ],
         ),
         const SizedBox(height: AppSizes.md),
-        GridView.builder(
+        if (_loadingSlots)
+          const Padding(
+            padding: EdgeInsets.all(AppSizes.xl),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else
+          GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -670,7 +736,7 @@ class _BookCourtPageState extends State<BookCourtPage> {
         Expanded(
           flex: 2,
           child: ElevatedButton(
-            onPressed: _allSelected
+            onPressed: (_allSelected && !_submitting)
                 ? () {
                     _showConfirmationDialog();
                   }
@@ -686,7 +752,17 @@ class _BookCourtPageState extends State<BookCourtPage> {
                 borderRadius: BorderRadius.circular(AppSizes.radiusLg),
               ),
             ),
-            child: const Text('تأكيد الحجز'),
+            child: _submitting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text('تأكيد الحجز'),
           ),
         ),
       ],
@@ -714,7 +790,7 @@ class _BookCourtPageState extends State<BookCourtPage> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(ctx).pop();
-                widget.onComplete?.call();
+                _submitBooking();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -727,6 +803,57 @@ class _BookCourtPageState extends State<BookCourtPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _submitBooking() async {
+    final court = _court;
+    if (court == null ||
+        _selectedDate == null ||
+        _selectedTime == null ||
+        _selectedDuration == null) {
+      return;
+    }
+
+    setState(() => _submitting = true);
+
+    final hour = int.tryParse(_selectedTime!.split(':').first) ?? 0;
+    final start = DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      hour,
+    );
+
+    try {
+      await _repository.createBooking(
+        courtId: court.numericId,
+        startTime: start,
+        durationMinutes: _selectedDuration!,
+      );
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      _showSnack('تم تأكيد الحجز بنجاح', success: true);
+      widget.onComplete?.call();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      _showSnack(
+        e.localized(context.appSettings.language.isRtl),
+        success: false,
+      );
+      // The slot may have just been taken — refresh availability.
+      _loadAvailability(_selectedDate!);
+    }
+  }
+
+  void _showSnack(String message, {required bool success}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor:
+            success ? AppColors.success : AppColors.destructive,
       ),
     );
   }

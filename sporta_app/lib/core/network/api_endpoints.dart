@@ -31,4 +31,12 @@ abstract class ApiEndpoints {
   static const String levelAssessment = '/players/level-assessment';
   static const String playerProfile = '/players/me';
   static const String favoriteSport = '/players/favorite-sport';
+
+  static const String courts = '/courts';
+  static String court(int id) => '/courts/$id';
+  static String courtAvailability(int id) => '/courts/$id/availability';
+
+  static const String bookings = '/bookings';
+  static const String myBookings = '/bookings/me';
+  static String cancelBooking(int id) => '/bookings/$id/cancel';
 }
