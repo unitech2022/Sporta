@@ -1,14 +1,13 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/localization/app_translations.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../domain/entities/registration_data.dart';
 import '../models/api_exception.dart';
 import '../models/auth_response.dart';
 
 class AuthRepository {
-  AuthRepository() : _dio = ApiClient.instance.dio;
+  AuthRepository(this._dio);
 
   final Dio _dio;
 
