@@ -1,0 +1,33 @@
+# .claudeignore
+
+# Build files
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Generated files
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+
+# Platform folders
+ios/
+android/
+windows/
+linux/
+macos/
+web/
+
+# Dependencies
+.pub-cache/
+
+# Lock files
+pubspec.lock
+
+# Git
+.git/
+
+# IDE
+.idea/
+.vscode/

@@ -1,0 +1,92 @@
+@base = http://localhost:7000
+@contentType = application/json
+
+# ── Register ──────────────────────────────────────────────────────────────────
+POST {{base}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "firstName": "Ahmed",
+  "lastName": "Ali",
+  "email": "ahmed@test.com",
+  "phone": "0501234567",
+  "password": "Test1234",
+  "gender": "male",
+  "city": "Riyadh",
+  "roles": ["player"],
+  "language": "ar"
+}
+
+###
+
+# ── Login ─────────────────────────────────────────────────────────────────────
+POST {{base}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "phone": "0501234567",
+  "password": "Test1234"
+}
+
+###
+
+# ── Refresh Token ─────────────────────────────────────────────────────────────
+# (replace <refresh_token> with the token returned from login/register)
+POST {{base}}/api/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "<refresh_token>"
+}
+
+###
+
+# ── Forgot Password ───────────────────────────────────────────────────────────
+POST {{base}}/api/auth/forgot-password
+Content-Type: {{contentType}}
+
+{
+  "phone": "0501234567"
+}
+
+###
+
+# ── Verify OTP ────────────────────────────────────────────────────────────────
+POST {{base}}/api/auth/verify-otp
+Content-Type: {{contentType}}
+
+{
+  "phone": "0501234567",
+  "otp": "123456"
+}
+
+###
+
+# ── Reset Password ────────────────────────────────────────────────────────────
+POST {{base}}/api/auth/reset-password
+Content-Type: {{contentType}}
+
+{
+  "phone": "0501234567",
+  "otp": "123456",
+  "newPassword": "NewPass1234"
+}
+
+###
+
+# ── Update Language (requires Bearer token) ───────────────────────────────────
+PUT {{base}}/api/users/language
+Content-Type: {{contentType}}
+Authorization: Bearer <access_token>
+
+{
+  "language": "en"
+}
+
+###
+
+# ── Get All Users ─────────────────────────────────────────────────────────────
+GET {{base}}/api/users
+Accept: {{contentType}}
+
+###
