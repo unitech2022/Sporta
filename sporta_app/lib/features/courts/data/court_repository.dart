@@ -1,56 +1,15 @@
 import 'package:dio/dio.dart';
 
-import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../auth/data/models/api_exception.dart';
 import '../domain/entities/court_entity.dart';
+import 'models/booking_result.dart';
+import 'models/court_slot.dart';
 
-/// A single bookable time slot for a court on a given day.
-class CourtSlot {
-  const CourtSlot({
-    required this.time,
-    required this.isBooked,
-    required this.price,
-    required this.isPeak,
-  });
-
-  final String time;
-  final bool isBooked;
-  final int price;
-  final bool isPeak;
-
-  factory CourtSlot.fromJson(Map<String, dynamic> json) => CourtSlot(
-        time: json['time']?.toString() ?? '',
-        isBooked: json['isBooked'] == true,
-        price: (json['price'] as num?)?.round() ?? 0,
-        isPeak: json['isPeak'] == true,
-      );
-}
-
-/// Result of a confirmed court booking.
-class BookingResult {
-  const BookingResult({
-    required this.id,
-    required this.courtName,
-    required this.totalPrice,
-    required this.status,
-  });
-
-  final int id;
-  final String courtName;
-  final int totalPrice;
-  final String status;
-
-  factory BookingResult.fromJson(Map<String, dynamic> json) => BookingResult(
-        id: (json['id'] as num?)?.toInt() ?? 0,
-        courtName: json['courtName']?.toString() ?? '',
-        totalPrice: (json['totalPrice'] as num?)?.round() ?? 0,
-        status: json['status']?.toString() ?? '',
-      );
-}
-
+/// Talks to the courts/booking REST endpoints. All API logic lives here so the
+/// cubits only orchestrate calls and never touch [Dio] directly.
 class CourtRepository {
-  CourtRepository() : _dio = ApiClient.instance.dio;
+  CourtRepository(this._dio);
 
   final Dio _dio;
 

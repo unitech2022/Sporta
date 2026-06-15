@@ -1,5 +1,19 @@
 import '../domain/entities/court_entity.dart';
 
+/// Peak pricing applies from 16:00 onwards (matches the backend schedule).
+bool isPeakHour(String time) {
+  final hour = int.tryParse(time.split(':').first) ?? 0;
+  return hour >= 16;
+}
+
+/// Hourly rate for a slot starting at [time].
+int slotPrice(CourtEntity court, String time) =>
+    isPeakHour(time) ? court.peakHourPrice : court.basePrice;
+
+/// Total price for a session of [durationMinutes] starting at [time].
+int sessionTotalPrice(CourtEntity court, String time, int durationMinutes) =>
+    (slotPrice(court, time) * (durationMinutes / 60)).round();
+
 String courtTypeLabel(CourtType type) {
   switch (type) {
     case CourtType.indoor:

@@ -26,7 +26,6 @@ class CourtEntity {
   final List<String> availableTimes;
   final List<int> availableDurations;
   final List<String> facilities;
-  bool isFavorite;
 
   CourtEntity({
     required this.id,
@@ -45,7 +44,6 @@ class CourtEntity {
     required this.availableTimes,
     required this.availableDurations,
     required this.facilities,
-    this.isFavorite = false,
   });
 
   /// Numeric backend id (the API uses ints; [id] keeps the string form used
