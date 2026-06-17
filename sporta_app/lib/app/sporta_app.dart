@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/di/service_locator.dart';
 import '../core/state/app_scope.dart';
 import '../core/state/app_settings.dart';
 import '../core/theme/app_theme.dart';
+import '../features/auth/presentation/cubit/auth_cubit.dart';
 import '../features/auth/presentation/pages/auth_flow_page.dart';
 import '../features/auth/presentation/pages/sports_selection_page.dart';
-import '../features/auth/presentation/state/auth_notifier.dart';
 import '../features/auth/presentation/state/auth_scope.dart';
 import '../features/level/presentation/pages/level_assessment_page.dart';
 import 'main_shell.dart';
@@ -19,8 +21,9 @@ class SportaApp extends StatefulWidget {
 }
 
 class _SportaAppState extends State<SportaApp> {
-  final _settings = AppSettings();
-  late final _auth = AuthNotifier(_settings);
+  // App-wide singletons (owned by the service locator, not disposed here).
+  final AppSettings _settings = getIt<AppSettings>();
+  final AuthCubit _auth = getIt<AuthCubit>();
 
   @override
   void initState() {
@@ -29,32 +32,28 @@ class _SportaAppState extends State<SportaApp> {
   }
 
   @override
-  void dispose() {
-    _auth.dispose();
-    _settings.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AppScope(
-      settings: _settings,
-      child: AuthScope(
-        auth: _auth,
+    return BlocProvider<AuthCubit>.value(
+      value: _auth,
+      child: AppScope(
+        settings: _settings,
+        // Rebuild the app when the language (settings) or auth session changes.
         child: ListenableBuilder(
-          listenable: Listenable.merge([_settings, _auth]),
-          builder: (context, _) => MaterialApp(
-            title: 'Sporta',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light,
-            locale: Locale(_settings.language.name),
-            builder: (context, child) => Directionality(
-              textDirection: _settings.language.isRtl
-                  ? TextDirection.rtl
-                  : TextDirection.ltr,
-              child: child!,
+          listenable: _settings,
+          builder: (context, _) => BlocBuilder<AuthCubit, AuthState>(
+            builder: (context, _) => MaterialApp(
+              title: 'Sporta',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.light,
+              locale: Locale(_settings.language.name),
+              builder: (context, child) => Directionality(
+                textDirection: _settings.language.isRtl
+                    ? TextDirection.rtl
+                    : TextDirection.ltr,
+                child: child!,
+              ),
+              home: const _AppEntry(),
             ),
-            home: const _AppEntry(),
           ),
         ),
       ),

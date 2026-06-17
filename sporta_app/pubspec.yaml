@@ -38,6 +38,10 @@ dependencies:
   dio: ^5.7.0
   flutter_secure_storage: ^9.2.2
   shared_preferences: ^2.3.3
+  # State management (Cubit) + dependency injection.
+  flutter_bloc: ^9.1.1
+  get_it: ^8.0.3
+  equatable: ^2.0.7
 
 dev_dependencies:
   flutter_test:

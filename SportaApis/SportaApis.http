@@ -90,3 +90,56 @@ GET {{base}}/api/users
 Accept: {{contentType}}
 
 ###
+
+# ── List Courts (requires Bearer token) ──────────────────────────────────────
+GET {{base}}/api/courts?city=الدمام&type=indoor
+Accept: {{contentType}}
+Authorization: Bearer <access_token>
+
+###
+
+# ── Court Details ─────────────────────────────────────────────────────────────
+GET {{base}}/api/courts/1
+Accept: {{contentType}}
+Authorization: Bearer <access_token>
+
+###
+
+# ── Court Availability for a date ─────────────────────────────────────────────
+GET {{base}}/api/courts/1/availability?date=2026-06-20
+Accept: {{contentType}}
+Authorization: Bearer <access_token>
+
+###
+
+# ── Create Booking ────────────────────────────────────────────────────────────
+POST {{base}}/api/bookings
+Content-Type: {{contentType}}
+Authorization: Bearer <access_token>
+
+{
+  "courtId": 1,
+  "startTime": "2026-06-20T18:00:00",
+  "durationMinutes": 90,
+  "paidFullAmount": true
+}
+
+###
+
+# ── My Bookings ───────────────────────────────────────────────────────────────
+GET {{base}}/api/bookings/me
+Accept: {{contentType}}
+Authorization: Bearer <access_token>
+
+###
+
+# ── Cancel Booking ────────────────────────────────────────────────────────────
+PUT {{base}}/api/bookings/1/cancel
+Content-Type: {{contentType}}
+Authorization: Bearer <access_token>
+
+{
+  "reason": "تغيّرت خطتي"
+}
+
+###

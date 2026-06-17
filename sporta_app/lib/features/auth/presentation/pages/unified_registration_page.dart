@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
-import '../../../../core/state/app_scope.dart';
-import '../../../../core/widgets/sporta_logo.dart';
-import '../../../../core/widgets/step_progress_bar.dart';
 import '../../domain/entities/registration_data.dart';
 import '../state/auth_scope.dart';
 import '../widgets/basic_info_step.dart';
-import '../widgets/circle_back_button.dart';
+import '../widgets/registration_nav.dart';
 import '../widgets/role_details_step.dart';
 import '../widgets/roles_step.dart';
 import '../widgets/summary_step.dart';
@@ -103,52 +100,19 @@ class _UnifiedRegistrationPageState extends State<UnifiedRegistrationPage> {
     return Scaffold(
       body: Column(
         children: [
-          _Header(step: _step, totalSteps: _totalSteps, onBack: _back),
+          RegistrationHeader(
+            step: _step,
+            totalSteps: _totalSteps,
+            onBack: _back,
+          ),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(AppSizes.pagePadding),
-              child: switch (_currentStep) {
-                _RegStep.basicInfo => BasicInfoStep(
-                    key: _step1Key,
-                    data: _data,
-                    formKey: _step1FormKey,
-                  ),
-                _RegStep.roles => RolesStep(
-                    data: _data,
-                    onChanged: () => setState(() {}),
-                  ),
-                _RegStep.roleDetails => RoleDetailsStep(
-                    key: _roleDetailsKey,
-                    data: _data,
-                    formKey: _roleDetailsFormKey,
-                  ),
-                _RegStep.summary => SummaryStep(data: _data),
-              },
+              child: _buildStep(),
             ),
           ),
-          if (_apiError != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.pagePadding,
-              ),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSizes.md),
-                decoration: BoxDecoration(
-                  color: AppColors.destructive.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                  border: Border.all(
-                    color: AppColors.destructive.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Text(
-                  _apiError!,
-                  style: AppTextStyles.bodySmall
-                      .copyWith(color: AppColors.destructive),
-                ),
-              ),
-            ),
-          _Footer(
+          if (_apiError != null) _buildError(),
+          RegistrationFooter(
             step: _step,
             totalSteps: _totalSteps,
             canProceed:
@@ -161,152 +125,41 @@ class _UnifiedRegistrationPageState extends State<UnifiedRegistrationPage> {
       ),
     );
   }
-}
 
-// ── Private widgets ───────────────────────────────────────────────────────────
-
-
-class _Header extends StatelessWidget {
-  const _Header({
-    required this.step,
-    required this.totalSteps,
-    required this.onBack,
-  });
-
-  final int step;
-  final int totalSteps;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(gradient: AppColors.headerGradient),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSizes.pagePadding,
-            AppSizes.xxxl,
-            AppSizes.pagePadding,
-            AppSizes.xxl,
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  CircleBackButton(onTap: onBack),
-                  const SportaLogo(width: 64, white: true),
-                  const SizedBox(width: 36),
-                ],
-              ),
-              const SizedBox(height: AppSizes.lg),
-              Text(
-                context.tr('register'),
-                style: AppTextStyles.heading3.copyWith(color: Colors.white),
-              ),
-              const SizedBox(height: AppSizes.lg),
-              StepProgressBar(currentStep: step, totalSteps: totalSteps),
-              const SizedBox(height: AppSizes.sm),
-              Text(
-                '${context.tr('step')} $step ${context.tr('of')} $totalSteps',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: Colors.white.withValues(alpha: 0.8),
-                ),
-              ),
-            ],
-          ),
+  Widget _buildStep() {
+    return switch (_currentStep) {
+      _RegStep.basicInfo => BasicInfoStep(
+          key: _step1Key,
+          data: _data,
+          formKey: _step1FormKey,
         ),
-      ),
-    );
+      _RegStep.roles => RolesStep(
+          data: _data,
+          onChanged: () => setState(() {}),
+        ),
+      _RegStep.roleDetails => RoleDetailsStep(
+          key: _roleDetailsKey,
+          data: _data,
+          formKey: _roleDetailsFormKey,
+        ),
+      _RegStep.summary => SummaryStep(data: _data),
+    };
   }
-}
 
-class _Footer extends StatelessWidget {
-  const _Footer({
-    required this.step,
-    required this.totalSteps,
-    required this.canProceed,
-    required this.isLoading,
-    required this.onNext,
-    required this.onBack,
-  });
-
-  final int step;
-  final int totalSteps;
-  final bool canProceed;
-  final bool isLoading;
-  final VoidCallback onNext;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: AppColors.border)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSizes.pagePadding,
-            AppSizes.lg,
-            AppSizes.pagePadding,
-            AppSizes.xxl,
-          ),
-          child: Row(
-            children: [
-              if (step > 1) ...[
-                TextButton.icon(
-                  onPressed: isLoading ? null : onBack,
-                  style: TextButton.styleFrom(
-                    backgroundColor: const Color(0xFFF3F4F6),
-                    foregroundColor: AppColors.secondary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.xxl,
-                      vertical: AppSizes.md,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusLg),
-                    ),
-                  ),
-                  icon: const Icon(Icons.chevron_right,
-                      size: AppSizes.iconMd),
-                  label: Text(context.tr('back')),
-                ),
-                const SizedBox(width: AppSizes.md),
-              ],
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: (canProceed && !isLoading) ? onNext : null,
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              step == totalSteps
-                                  ? context.tr('createAccount')
-                                  : context.tr('next'),
-                            ),
-                            if (step < totalSteps)
-                              const Icon(Icons.chevron_left,
-                                  size: AppSizes.iconMd),
-                          ],
-                        ),
-                ),
-              ),
-            ],
-          ),
+  Widget _buildError() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.pagePadding),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppSizes.md),
+        decoration: BoxDecoration(
+          color: AppColors.destructive.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+          border: Border.all(color: AppColors.destructive.withValues(alpha: 0.3)),
+        ),
+        child: Text(
+          _apiError!,
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.destructive),
         ),
       ),
     );

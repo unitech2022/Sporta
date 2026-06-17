@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 
-import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../auth/data/models/api_exception.dart';
 
@@ -25,7 +24,7 @@ class LevelAssessmentResult {
 }
 
 class LevelRepository {
-  LevelRepository() : _dio = ApiClient.instance.dio;
+  LevelRepository(this._dio);
 
   final Dio _dio;
 
