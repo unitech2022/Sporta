@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/state/app_scope.dart';
 import '../../../../core/state/app_settings.dart';
 import '../../domain/entities/registration_data.dart';
 import 'role_card.dart';
@@ -25,7 +26,7 @@ class RolesStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'اختر أدوارك في التطبيق',
+          context.tr('auth.roles_step.title'),
           style: AppTextStyles.heading1.copyWith(color: AppColors.secondary),
         ),
         SizedBox(height: AppSizes.xxl),
@@ -40,31 +41,31 @@ class RolesStep extends StatelessWidget {
             ),
           ),
           child: Text(
-            '💡 يمكنك اختيار أكثر من دور واحد. ستتمكن من التبديل بينهم في أي وقت',
+            context.tr('auth.roles_step.multiRoleHint'),
             style: AppTextStyles.bodySmall
                 .copyWith(color: AppColors.secondary),
           ),
         ),
         const SizedBox(height: AppSizes.xxl),
         RoleCard(
-          title: 'لاعب',
-          description: 'احجز ملاعب، انضم للمباريات، وتتبع تقدمك',
+          title: context.tr('auth.roles_step.playerTitle'),
+          description: context.tr('auth.roles_step.playerDesc'),
           icon: Icons.sports_tennis,
           selected: data.roles.contains(UserRole.player),
           onTap: () => _toggle(UserRole.player),
         ),
         const SizedBox(height: AppSizes.md),
         RoleCard(
-          title: 'مدرب',
-          description: 'قدم دروس تدريبية وطور مهارات اللاعبين',
+          title: context.tr('auth.roles_step.coachTitle'),
+          description: context.tr('auth.roles_step.coachDesc'),
           icon: Icons.emoji_events_outlined,
           selected: data.roles.contains(UserRole.coach),
           onTap: () => _toggle(UserRole.coach),
         ),
         const SizedBox(height: AppSizes.md),
         RoleCard(
-          title: 'مالك ملعب',
-          description: 'أدر ملعبك، استقبل الحجوزات، ونظم البطولات',
+          title: context.tr('auth.roles_step.venueTitle'),
+          description: context.tr('auth.roles_step.venueDesc'),
           icon: Icons.stadium_outlined,
           selected: data.roles.contains(UserRole.venue),
           onTap: () => _toggle(UserRole.venue),
@@ -80,7 +81,7 @@ class RolesStep extends StatelessWidget {
               border: Border.all(color: const Color(0xFFFEF08A)),
             ),
             child: Text(
-              '⚠️ يجب اختيار دور واحد على الأقل للمتابعة',
+              context.tr('auth.roles_step.atLeastOneWarning'),
               style: AppTextStyles.bodySmall
                   .copyWith(color: const Color(0xFF854D0E)),
             ),

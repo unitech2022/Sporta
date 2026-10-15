@@ -1,8 +1,14 @@
+import 'package:sporta_app/core/widgets/directional_icon.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/localization/app_translations.dart';
+import '../../../../core/state/app_scope.dart';
+import '../../../auth/presentation/state/auth_scope.dart';
+import '../../../../core/localization/tr_global.dart';
+import '../../../../core/utils/system_insets.dart';
 
 class LanguageSettingsPage extends StatefulWidget {
   const LanguageSettingsPage({super.key, required this.onBack});
@@ -13,12 +19,17 @@ class LanguageSettingsPage extends StatefulWidget {
 }
 
 class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
-  String _selectedLang = 'ar';
+  void _select(AppLanguage lang) {
+    if (context.appSettings.language == lang) return;
+    // Applies globally (locale + direction), persists locally and to the API.
+    context.auth.updateLanguage(lang);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final current = context.appSettings.language;
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: current.isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: ColoredBox(
         color: AppColors.background,
         child: Column(
@@ -26,11 +37,13 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
             _buildHeader(),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(AppSizes.pagePadding),
+                padding: context.safeBottom(
+                  const EdgeInsets.all(AppSizes.pagePadding),
+                ),
                 children: [
                   _buildInfoCard(),
                   const SizedBox(height: AppSizes.lg),
-                  _buildLanguageCard(),
+                  _buildLanguageCard(current),
                   const SizedBox(height: AppSizes.lg),
                   _buildNote(),
                   const SizedBox(height: AppSizes.xl),
@@ -71,17 +84,21 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
                   customBorder: const CircleBorder(),
                   child: const Padding(
                     padding: EdgeInsets.all(AppSizes.sm),
-                    child: Icon(Icons.chevron_right,
-                        size: AppSizes.iconMd, color: Colors.white),
+                    child: DirectionalIcon(
+                      rtl: Icons.chevron_right,
+                      ltr: Icons.chevron_left,
+                      size: AppSizes.iconMd,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'تغيير اللغة',
+                  context.tr('تغيير اللغة'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
@@ -113,8 +130,11 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
               color: AppColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(AppSizes.radiusLg),
             ),
-            child: const Icon(Icons.language,
-                size: AppSizes.iconSm, color: AppColors.primary),
+            child: const Icon(
+              Icons.language,
+              size: AppSizes.iconSm,
+              color: AppColors.primary,
+            ),
           ),
           SizedBox(width: AppSizes.md),
           Expanded(
@@ -122,15 +142,18 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'اختر اللغة المفضلة',
+                  context.tr('اختر اللغة المفضلة'),
                   style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.primary, fontWeight: FontWeight.w600),
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 SizedBox(height: AppSizes.xs),
                 Text(
-                  'سيتم تطبيق اللغة الجديدة على جميع أجزاء التطبيق',
+                  context.tr('سيتم تطبيق اللغة الجديدة على جميع أجزاء التطبيق'),
                   style: AppTextStyles.caption.copyWith(
-                      color: AppColors.primary.withValues(alpha: 0.8)),
+                    color: AppColors.primary.withValues(alpha: 0.8),
+                  ),
                 ),
               ],
             ),
@@ -140,34 +163,33 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
     );
   }
 
-  Widget _buildLanguageCard() {
+  Widget _buildLanguageCard(AppLanguage current) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(AppSizes.radiusXl),
         border: Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
         ],
       ),
       child: Column(
         children: [
           _languageRow(
-            flag: '🇸🇦',
-            nameAr: 'العربية',
-            nameNative: 'العربية',
-            code: 'ar',
+            flag: 'ع',
+            nameAr: trg('العربية'),
+            nameNative: trg('العربية'),
+            lang: AppLanguage.ar,
+            current: current,
             isFirst: true,
           ),
           const Divider(height: 1, indent: AppSizes.lg),
           _languageRow(
-            flag: '🇬🇧',
-            nameAr: 'الإنجليزية',
+            flag: 'EN',
+            nameAr: trg('الإنجليزية'),
             nameNative: 'English',
-            code: 'en',
+            lang: AppLanguage.en,
+            current: current,
             isLast: true,
           ),
         ],
@@ -179,13 +201,14 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
     required String flag,
     required String nameAr,
     required String nameNative,
-    required String code,
+    required AppLanguage lang,
+    required AppLanguage current,
     bool isFirst = false,
     bool isLast = false,
   }) {
-    final selected = _selectedLang == code;
+    final selected = current == lang;
     return InkWell(
-      onTap: () => setState(() => _selectedLang = code),
+      onTap: () => _select(lang),
       borderRadius: BorderRadius.vertical(
         top: isFirst ? const Radius.circular(AppSizes.radiusXl) : Radius.zero,
         bottom: isLast ? const Radius.circular(AppSizes.radiusXl) : Radius.zero,
@@ -197,24 +220,43 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
               ? AppColors.primary.withValues(alpha: 0.05)
               : Colors.transparent,
           borderRadius: BorderRadius.vertical(
-            top:
-                isFirst ? const Radius.circular(AppSizes.radiusXl) : Radius.zero,
-            bottom:
-                isLast ? const Radius.circular(AppSizes.radiusXl) : Radius.zero,
+            top: isFirst
+                ? const Radius.circular(AppSizes.radiusXl)
+                : Radius.zero,
+            bottom: isLast
+                ? const Radius.circular(AppSizes.radiusXl)
+                : Radius.zero,
           ),
         ),
         child: Row(
           children: [
-            Text(flag, style: const TextStyle(fontSize: 28)),
+            // حرف اللغة بدل علم الإيموجي: خط التطبيق لا يحوي الإيموجي.
+            Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.1),
+              ),
+              child: Text(flag,
+                  style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                      height: 1)),
+            ),
             SizedBox(width: AppSizes.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(nameAr,
-                      style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.secondary,
-                          fontWeight: FontWeight.w500)),
+                  Text(
+                    nameAr,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.secondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   Text(nameNative, style: AppTextStyles.caption),
                 ],
               ),
@@ -227,8 +269,11 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
                   color: AppColors.primary,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check,
-                    size: 14, color: AppColors.onPrimary),
+                child: const Icon(
+                  Icons.check,
+                  size: 14,
+                  color: AppColors.onPrimary,
+                ),
               )
             else
               Container(
@@ -256,14 +301,21 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline,
-              size: AppSizes.iconMd, color: Color(0xFFD97706)),
+          const Icon(
+            Icons.info_outline,
+            size: AppSizes.iconMd,
+            color: Color(0xFFD97706),
+          ),
           SizedBox(width: AppSizes.sm),
           Expanded(
             child: Text(
-              'بعد تغيير اللغة، سيتم إعادة تشغيل التطبيق لتطبيق التغييرات',
+              context.tr(
+                'يُطبَّق تغيير اللغة فورًا على اتجاه التطبيق ولغته المحفوظة',
+              ),
               style: AppTextStyles.bodySmall.copyWith(
-                  color: const Color(0xFF92400E), height: 1.6),
+                color: const Color(0xFF92400E),
+                height: 1.6,
+              ),
             ),
           ),
         ],

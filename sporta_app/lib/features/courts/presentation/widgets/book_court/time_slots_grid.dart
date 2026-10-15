@@ -1,30 +1,52 @@
+import 'package:sporta_app/core/state/app_scope.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/utils/money.dart';
 import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../core/constants/app_text_styles.dart';
-import '../../../domain/entities/court_entity.dart';
-import '../../courts_helpers.dart';
+import '../../../data/models/court_slot.dart';
+import 'package:sporta_app/core/utils/server_time.dart';
 
-/// Grid of bookable time slots for the selected date. Booked slots are shown
-/// disabled; peak slots are marked with a dot.
+/// Grid of bookable time slots for the selected date, stepped to match the
+/// chosen duration (backend returns e.g. every 120 min for a 120-min
+/// session). Booked slots are shown disabled; peak slots are marked with a dot.
 class TimeSlotsGrid extends StatelessWidget {
   const TimeSlotsGrid({
     super.key,
-    required this.court,
-    required this.timeSlots,
-    required this.bookedSlots,
+    required this.slots,
     required this.selectedTime,
     required this.loading,
     required this.onSelect,
+    this.dayClosed = false,
+    this.dayRangeLabel = '',
+    this.day,
   });
 
-  final CourtEntity court;
-  final List<String> timeSlots;
-  final Set<String> bookedSlots;
+  final List<CourtSlot> slots;
   final String? selectedTime;
   final bool loading;
   final ValueChanged<String> onSelect;
+
+  /// الملعب مغلق في اليوم المختار حسب دوام أسبوعه.
+  final bool dayClosed;
+
+  /// دوام اليوم المختار، مثل "08:00 - 14:00".
+  final String dayRangeLabel;
+
+  /// اليوم المختار. الخادم يُسقط مواعيد اليوم التي مضت، فالقائمة الفارغة في
+  /// يومٍ حاضر تعني «انتهت مواعيد اليوم» لا «لا مواعيد بهذه المدة».
+  final DateTime? day;
+
+  /// هل في مواعيد اليوم موعد ذروة يستحق شرح النقطة البرتقالية؟
+  bool get _hasPeak => slots.any((s) => s.isPeak);
+
+  bool get _isToday {
+    final d = day;
+    if (d == null) return false;
+    final now = ksaNow();
+    return d.year == now.year && d.month == now.month && d.day == now.day;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,42 +55,52 @@ class TimeSlotsGrid extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(
-              'اختر الوقت',
+            Text(context.tr('اختر الوقت'),
               style:
                   AppTextStyles.heading2.copyWith(color: AppColors.secondary),
             ),
             const Spacer(),
-            const _LegendItem(
+            _LegendItem(
               color: Color(0xFFF0FDF4),
               borderColor: Color(0xFF86EFAC),
-              label: 'متاح',
+              label: context.tr('متاح'),
             ),
             const SizedBox(width: AppSizes.sm),
-            const _LegendItem(
+            _LegendItem(
               color: Color(0xFFE5E7EB),
               borderColor: Color(0xFFE5E7EB),
-              label: 'محجوز',
+              label: context.tr('محجوز'),
             ),
           ],
         ),
         const SizedBox(height: AppSizes.xs),
+        // ساعات الذروة صارت من تحديد صاحب الملعب، فلا نذكر نطاقاً ثابتاً —
+        // نكتفي بشرح النقطة البرتقالية (وفقط حين يوجد موعد يحملها؛ ملعب
+        // مسعَّر بالمدد بلا قواعد لا ذروة فيه)، ودوام اليوم يُعرض بجانبها.
         Row(
           children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFB923C),
-                shape: BoxShape.circle,
+            if (_hasPeak) ...[
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFB923C),
+                  shape: BoxShape.circle,
+                ),
               ),
-            ),
-            const SizedBox(width: AppSizes.xs),
-            Text(
-              'ساعة الذروة (16:00 - 23:00)',
-              style: AppTextStyles.caption
-                  .copyWith(color: AppColors.mutedForeground),
-            ),
+              const SizedBox(width: AppSizes.xs),
+              Text(context.tr('سعر مرتفع'),
+                style: AppTextStyles.caption
+                    .copyWith(color: AppColors.mutedForeground),
+              ),
+            ],
+            if (!dayClosed && dayRangeLabel.isNotEmpty) ...[
+              const Spacer(),
+              Text('${context.tr('الدوام')} $dayRangeLabel',
+                style: AppTextStyles.caption
+                    .copyWith(color: AppColors.mutedForeground),
+              ),
+            ],
           ],
         ),
         const SizedBox(height: AppSizes.md),
@@ -76,6 +108,21 @@ class TimeSlotsGrid extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.all(AppSizes.xl),
             child: Center(child: CircularProgressIndicator()),
+          )
+        else if (slots.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.xl),
+            child: Center(
+              child: Text(
+                  context.tr(dayClosed
+                      ? context.tr('الملعب مغلق في هذا اليوم — اختر يوماً آخر')
+                      : _isToday
+                          ? context.tr('انتهت مواعيد اليوم — اختر يوماً آخر')
+                          : context.tr('لا توجد أوقات متاحة لهذه المدة')),
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.bodySmall
+                      .copyWith(color: AppColors.mutedForeground)),
+            ),
           )
         else
           _buildGrid(),
@@ -86,6 +133,10 @@ class TimeSlotsGrid extends StatelessWidget {
   Widget _buildGrid() {
     return GridView.builder(
       shrinkWrap: true,
+      // بلا هذين السطرين تعدّ الشبكة نفسها القائمة الرئيسية فتضيف حشوة
+      // المنطقة الآمنة (أعلاها وأسفلها) — فراغ كبير قبل المواعيد وبعدها.
+      primary: false,
+      padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
@@ -93,14 +144,15 @@ class TimeSlotsGrid extends StatelessWidget {
         mainAxisSpacing: AppSizes.sm,
         childAspectRatio: 1.8,
       ),
-      itemCount: timeSlots.length,
+      itemCount: slots.length,
       itemBuilder: (context, index) {
-        final time = timeSlots[index];
-        if (bookedSlots.contains(time)) return _BookedSlot(time: time);
+        final slot = slots[index];
+        final time = slot.time;
+        if (slot.isBooked) return _BookedSlot(time: time);
         return _AvailableSlot(
           time: time,
-          price: slotPrice(court, time),
-          isPeak: isPeakHour(time),
+          price: slot.price,
+          isPeak: slot.isPeak,
           isSelected: selectedTime == time,
           onTap: () => onSelect(time),
         );
@@ -119,7 +171,7 @@ class _AvailableSlot extends StatelessWidget {
   });
 
   final String time;
-  final int price;
+  final double price;
   final bool isPeak;
   final bool isSelected;
   final VoidCallback onTap;
@@ -152,7 +204,7 @@ class _AvailableSlot extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '$price ر.س',
+                    context.trArgs('{p0} ر.س', {'p0': money(price)}),
                     style: AppTextStyles.caption.copyWith(
                       color: isSelected
                           ? Colors.white.withValues(alpha: 0.85)
@@ -196,8 +248,7 @@ class _BookedSlot extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            Text(
-              'محجوز',
+            Text(context.tr('محجوز'),
               style: AppTextStyles.caption.copyWith(
                 color: AppColors.mutedForeground,
                 fontSize: 10,

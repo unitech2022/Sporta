@@ -20,7 +20,12 @@ public class TokenService : ITokenService
             Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var roles = user.Roles.Select(r => r.Role.ToString().ToLower()).ToList();
+        // الدور المعلّق (مدرب/ملعب بانتظار موافقة الأدمن) لا يدخل التوكن، فلا
+        // يفتح أي مسار محمي بالدور قبل الاعتماد.
+        var roles = user.Roles
+            .Where(r => r.IsApproved)
+            .Select(r => r.Role.ToString().ToLower())
+            .ToList();
 
         var claims = new List<Claim>
         {

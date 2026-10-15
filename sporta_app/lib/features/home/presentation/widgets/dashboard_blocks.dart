@@ -5,6 +5,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/widgets/sporta_logo.dart';
 import '../../../../core/widgets/tinted_card.dart';
+import '../../../notifications/presentation/pages/notifications_page.dart';
 
 /// Colored gradient header for coach/venue dashboards with the user
 /// identity and three quick stats.
@@ -15,6 +16,9 @@ class DashboardHeader extends StatelessWidget {
     required this.userName,
     required this.roleLabel,
     required this.stats,
+    this.foregroundColor = Colors.white,
+    this.logoWhite = true,
+    this.border,
   });
 
   final Gradient gradient;
@@ -22,11 +26,23 @@ class DashboardHeader extends StatelessWidget {
   final String roleLabel;
   final List<(String value, String label)> stats;
 
+  /// Text/icon color drawn on top of [gradient]. Defaults to white for the
+  /// colored gradients; pass a dark color when [gradient] is light/white.
+  final Color foregroundColor;
+
+  /// Whether the Sporta logo uses its white variant. Set false on light
+  /// backgrounds.
+  final bool logoWhite;
+
+  /// Optional border, useful when the background is white and needs
+  /// separation from the page background.
+  final BoxBorder? border;
+
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(gradient: gradient),
+      decoration: BoxDecoration(gradient: gradient, border: border),
       padding: const EdgeInsets.fromLTRB(
         AppSizes.pagePadding,
         AppSizes.xxxl,
@@ -38,7 +54,7 @@ class DashboardHeader extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SportaLogo(width: 80, white: true),
+              SportaLogo(width: 80, white: logoWhite),
               SizedBox(width: AppSizes.md),
               Expanded(
                 child: Column(
@@ -46,23 +62,29 @@ class DashboardHeader extends StatelessWidget {
                   children: [
                     Text(userName,
                         style: AppTextStyles.bodySmall.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9))),
+                            color: foregroundColor.withValues(alpha: 0.9))),
                     Text(roleLabel,
                         style: AppTextStyles.caption.copyWith(
-                            color: Colors.white.withValues(alpha: 0.7))),
+                            color: foregroundColor.withValues(alpha: 0.7))),
                   ],
                 ),
               ),
               Material(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: foregroundColor.withValues(alpha: 0.2),
                 shape: const CircleBorder(),
                 child: InkWell(
-                  onTap: () {},
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => NotificationsPage(
+                        onBack: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                  ),
                   customBorder: const CircleBorder(),
-                  child: const Padding(
-                    padding: EdgeInsets.all(AppSizes.sm),
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSizes.sm),
                     child: Icon(Icons.notifications_outlined,
-                        size: AppSizes.iconMd, color: Colors.white),
+                        size: AppSizes.iconMd, color: foregroundColor),
                   ),
                 ),
               ),
@@ -78,18 +100,17 @@ class DashboardHeader extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(AppSizes.md),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: foregroundColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(AppSizes.radiusLg),
                     ),
                     child: Column(
                       children: [
                         Text(value,
                             style: AppTextStyles.heading1
-                                .copyWith(color: Colors.white)),
+                                .copyWith(color: foregroundColor)),
                         Text(label,
                             style: AppTextStyles.caption.copyWith(
-                                color:
-                                    Colors.white.withValues(alpha: 0.8))),
+                                color: foregroundColor.withValues(alpha: 0.8))),
                       ],
                     ),
                   ),
@@ -111,6 +132,8 @@ class OverviewStatCard extends StatelessWidget {
     required this.color,
     required this.value,
     required this.label,
+    this.backgroundColor,
+    this.valueColor,
   });
 
   final IconData icon;
@@ -118,17 +141,25 @@ class OverviewStatCard extends StatelessWidget {
   final String value;
   final String label;
 
+  /// Card background. Defaults to a soft tint of [color]; pass
+  /// [Colors.white] for a plain white card.
+  final Color? backgroundColor;
+
+  /// Value text color. Defaults to [color].
+  final Color? valueColor;
+
   @override
   Widget build(BuildContext context) {
     return TintedCard(
       tint: color,
+      backgroundColor: backgroundColor,
       child: Column(
         children: [
           Icon(icon, size: 32, color: color),
           SizedBox(height: AppSizes.sm),
           Text(value,
-              style: AppTextStyles.heading1
-                  .copyWith(color: color, fontWeight: FontWeight.w700)),
+              style: AppTextStyles.heading1.copyWith(
+                  color: valueColor ?? color, fontWeight: FontWeight.w700)),
           SizedBox(height: AppSizes.xs),
           Text(label,
               textAlign: TextAlign.center, style: AppTextStyles.caption),
@@ -198,80 +229,6 @@ class BookingInfoCard extends StatelessWidget {
         border: Border.all(color: borderColor ?? AppColors.border),
       ),
       child: body,
-    );
-  }
-}
-
-/// Two quick-action buttons at the bottom of coach/venue dashboards.
-class QuickActionsRow extends StatelessWidget {
-  const QuickActionsRow({
-    super.key,
-    required this.primaryIcon,
-    required this.primaryLabel,
-    required this.secondaryIcon,
-    required this.secondaryLabel,
-  });
-
-  final IconData primaryIcon;
-  final String primaryLabel;
-  final IconData secondaryIcon;
-  final String secondaryLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Material(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(AppSizes.radiusXl),
-            child: InkWell(
-              onTap: () {},
-              borderRadius: BorderRadius.circular(AppSizes.radiusXl),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.lg),
-                child: Column(
-                  children: [
-                    Icon(primaryIcon, size: 32, color: Colors.white),
-                    SizedBox(height: AppSizes.sm),
-                    Text(primaryLabel,
-                        style: AppTextStyles.bodySmall.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSizes.md),
-        Expanded(
-          child: Material(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSizes.radiusXl),
-              side: const BorderSide(color: AppColors.border, width: 2),
-            ),
-            child: InkWell(
-              onTap: () {},
-              borderRadius: BorderRadius.circular(AppSizes.radiusXl),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.lg),
-                child: Column(
-                  children: [
-                    Icon(secondaryIcon, size: 32, color: AppColors.primary),
-                    SizedBox(height: AppSizes.sm),
-                    Text(secondaryLabel,
-                        style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.secondary,
-                            fontWeight: FontWeight.w500)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

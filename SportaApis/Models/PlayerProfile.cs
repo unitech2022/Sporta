@@ -20,6 +20,10 @@ public class PlayerProfile : BaseEntity
 
     // نظام المستوى (1.4 + 1.10)
     public PlayerLevel Level { get; set; } = PlayerLevel.Beginner;
+
+    /// <summary>The admin-defined assessment level reached (per-sport), if any.</summary>
+    public int? AssessmentLevelId { get; set; }
+
     public float EloRating { get; set; } = 1000f; // نظام ELO الديناميكي (1.6)
 
     // نقاط الموثوقية - تُكسب بالالتزام وتُخصم بالإلغاء (2.8 / 2.9)

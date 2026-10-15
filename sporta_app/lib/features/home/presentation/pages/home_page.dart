@@ -6,12 +6,15 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/state/app_scope.dart';
 import '../../../../core/state/app_settings.dart';
 import '../../../../core/widgets/sporta_logo.dart';
+import '../../../auth/presentation/pages/add_role_page.dart';
+import '../../../auth/presentation/state/auth_scope.dart';
+import '../../../notifications/presentation/widgets/notification_bell.dart';
 import '../../domain/entities/role_account.dart';
+import '../widgets/admin_dashboard.dart';
 import '../widgets/coach_dashboard.dart';
-import '../widgets/home_roles_box.dart';
+import '../widgets/home_account_switcher.dart';
 import '../widgets/player_dashboard.dart';
 import '../widgets/venue_dashboard.dart';
-import 'points_system_page.dart';
 
 /// Home hub (converted from HomePage.tsx): white header with the roles
 /// box, then the dashboard of the active role.
@@ -27,22 +30,16 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final List<RoleAccount> _accounts = [
-    RoleAccount(type: UserRole.player, completed: true),
-  ];
+  late final List<RoleAccount> _accounts;
 
-  void _openPoints() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => Scaffold(
-          body: SafeArea(
-            child: PointsSystemPage(
-              onBack: () => Navigator.of(context).pop(),
-            ),
-          ),
-        ),
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    // Real roles the user registered with (each has a created profile).
+    final roles = context.auth.user?.roles ?? const [UserRole.player];
+    _accounts = [
+      for (final r in roles) RoleAccount(type: r, completed: true),
+    ];
   }
 
   void _selectRole(RoleAccount account) {
@@ -54,14 +51,37 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _addRole(UserRole role) {
-    setState(() => _accounts.add(RoleAccount(type: role)));
-    context.appSettings.setRole(role);
-    widget.onNavigate?.call('profile');
+  Future<void> _addRole(UserRole role) async {
+    // Open the account-details registration page for the chosen role; it
+    // registers the role on the backend and returns true on success.
+    final added = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(builder: (_) => AddRolePage(role: role)),
+    );
+    if (added == true && mounted) {
+      setState(() => _accounts.add(RoleAccount(type: role, completed: true)));
+    }
   }
 
-  void _deleteRole(RoleAccount account) {
-    setState(() => _accounts.remove(account));
+  /// حذف ناعم على الخادم: يُنهي التزامات الدور القادمة ويسترد ما يلزم، ثم
+  /// يُخفيه ويُبقي بياناته. الردّ جلسة جديدة بلا صلاحية الدور المحذوف، فتُبنى
+  /// قائمة الحسابات من المستخدم المحدَّث لا بالحذف من الذاكرة.
+  Future<void> _deleteRole(RoleAccount account) async {
+    final error = await context.auth.deleteRole(account.type);
+    if (!mounted) return;
+
+    if (error != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+
+    final roles = context.auth.user?.roles ?? const [UserRole.player];
+    setState(() {
+      _accounts
+        ..clear()
+        ..addAll([for (final r in roles) RoleAccount(type: r, completed: true)]);
+    });
+
     if (context.appSettings.role == account.type && _accounts.isNotEmpty) {
       context.appSettings.setRole(_accounts.first.type);
     }
@@ -101,35 +121,24 @@ class _HomePageState extends State<HomePage> {
             AppSizes.pagePadding,
             AppSizes.lg,
           ),
-          child: Column(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              const SportaLogo(width: 80),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const SportaLogo(width: 80),
-                  Material(
-                    color: const Color(0xFFF3F4F6),
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      onTap: () {},
-                      customBorder: const CircleBorder(),
-                      child: const Padding(
-                        padding: EdgeInsets.all(AppSizes.sm),
-                        child: Icon(Icons.notifications_outlined,
-                            size: AppSizes.iconMd,
-                            color: AppColors.secondary),
-                      ),
-                    ),
+                  HomeAccountSwitcher(
+                    userName: context.auth.user?.fullName ?? context.tr('لاعب'),
+                    avatarUrl: context.auth.user?.avatarUrl,
+                    accounts: _accounts,
+                    activeRole: activeRole,
+                    onSelectRole: _selectRole,
+                    onAddRole: _addRole,
+                    onDeleteRole: _deleteRole,
                   ),
+                  const SizedBox(width: AppSizes.sm),
+                  const NotificationBell(),
                 ],
-              ),
-              const SizedBox(height: AppSizes.xl),
-              HomeRolesBox(
-                accounts: _accounts,
-                activeRole: activeRole,
-                onSelectRole: _selectRole,
-                onAddRole: _addRole,
-                onDeleteRole: _deleteRole,
               ),
             ],
           ),
@@ -142,9 +151,9 @@ class _HomePageState extends State<HomePage> {
     return switch (role) {
       UserRole.coach => const CoachDashboard(),
       UserRole.venue => const VenueDashboard(),
+      UserRole.admin => const AdminDashboard(),
       UserRole.player => PlayerDashboard(
-          onOpenPoints: _openPoints,
-          onOpenCourts: () => widget.onNavigate?.call('courts'),
+          onNavigate: (page) => widget.onNavigate?.call(page),
         ),
     };
   }
@@ -169,13 +178,13 @@ class _HomePageState extends State<HomePage> {
                       TextStyle(fontSize: 24, color: Color(0xFFF97316))),
             ),
             SizedBox(height: AppSizes.lg),
-            Text('يجب إكمال تسجيل حسابك أولاً',
+            Text(context.tr('يجب إكمال تسجيل حسابك أولاً'),
                 style: AppTextStyles.body
                     .copyWith(color: AppColors.secondary)),
             const SizedBox(height: AppSizes.lg),
             ElevatedButton(
               onPressed: () => widget.onNavigate?.call('profile'),
-              child: const Text('إكمال التسجيل'),
+              child: Text(context.tr('إكمال التسجيل')),
             ),
           ],
         ),

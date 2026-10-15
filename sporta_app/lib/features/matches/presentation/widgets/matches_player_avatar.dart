@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/widgets/network_circle_avatar.dart';
 
 /// Circular gradient avatar showing player initials or a level number,
 /// mirroring the `bg-gradient-to-br ... rounded-full` avatars of the TSX.
@@ -10,6 +11,7 @@ class MatchesPlayerAvatar extends StatelessWidget {
   const MatchesPlayerAvatar({
     super.key,
     this.label,
+    this.imageUrl,
     this.icon,
     this.iconColor,
     this.gradient,
@@ -24,6 +26,9 @@ class MatchesPlayerAvatar extends StatelessWidget {
 
   /// Text shown inside the avatar (initials or level).
   final String? label;
+
+  /// الصورة الشخصية للاعب؛ تحل محل [label]/[icon] عند توفرها.
+  final String? imageUrl;
 
   /// Icon shown instead of [label] (e.g. the empty-slot Users icon).
   final IconData? icon;
@@ -75,24 +80,29 @@ class MatchesPlayerAvatar extends StatelessWidget {
       );
     }
 
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: gradient == null ? color : null,
-        gradient: gradient == null
-            ? null
-            : LinearGradient(
-                begin: AlignmentDirectional.topStart,
-                end: AlignmentDirectional.bottomEnd,
-                colors: gradient!,
-              ),
-        border: borderColor == null
-            ? null
-            : Border.all(color: borderColor!, width: borderWidth),
+    // [content] (initials/icon) doubles as the fallback when the photo fails.
+    return NetworkDecorationImage(
+      imageUrl: imageUrl,
+      builder: (_, image) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: gradient == null ? color : null,
+          gradient: gradient == null
+              ? null
+              : LinearGradient(
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
+                  colors: gradient!,
+                ),
+          image: image,
+          border: borderColor == null
+              ? null
+              : Border.all(color: borderColor!, width: borderWidth),
+        ),
+        child: image == null ? content : null,
       ),
-      child: content,
     );
   }
 }

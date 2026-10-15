@@ -1,3 +1,4 @@
+import 'package:sporta_app/core/state/app_scope.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
@@ -22,38 +23,38 @@ class DurationPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'اختر المدة',
+        Text(context.tr('اختر المدة'),
           style: AppTextStyles.heading2.copyWith(color: AppColors.secondary),
         ),
         const SizedBox(height: AppSizes.md),
-        Row(
+        // Wrap بدل Row: النص الإنجليزي («120 minutes») أعرض من العربي فكانت
+        // الخيارات الثلاثة تفيض عن عرض الشاشة؛ الآن ينزل ما لا يتسع سطراً جديداً.
+        Wrap(
+          spacing: AppSizes.sm,
+          runSpacing: AppSizes.sm,
           children: durations.map((dur) {
             final isSelected = selected == dur;
-            return Padding(
-              padding: const EdgeInsets.only(left: AppSizes.sm),
-              child: GestureDetector(
-                onTap: () => onSelect(dur),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.lg,
-                    vertical: AppSizes.sm,
+            return GestureDetector(
+              onTap: () => onSelect(dur),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.lg,
+                  vertical: AppSizes.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : AppColors.card,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                  border: Border.all(
+                    color: isSelected ? AppColors.primary : AppColors.border,
+                    width: isSelected ? 2 : 1,
                   ),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary : AppColors.card,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                    border: Border.all(
-                      color: isSelected ? AppColors.primary : AppColors.border,
-                      width: isSelected ? 2 : 1,
-                    ),
-                  ),
-                  child: Text(
-                    '$dur دقيقة',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : AppColors.secondary,
-                    ),
+                ),
+                child: Text(
+                  context.trArgs('{p0} دقيقة', {'p0': dur}),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.white : AppColors.secondary,
                   ),
                 ),
               ),

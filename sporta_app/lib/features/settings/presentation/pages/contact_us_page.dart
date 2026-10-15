@@ -1,8 +1,31 @@
+import 'package:sporta_app/core/state/app_scope.dart';
+import 'package:sporta_app/core/widgets/directional_icon.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../../support/data/support_repository.dart';
+import '../../../support/presentation/pages/support_chat_page.dart';
+import '../../data/settings_repository.dart';
+import '../../../../core/localization/tr_global.dart';
+import '../../../auth/presentation/widgets/login_required_sheet.dart';
+import '../../../../core/utils/system_insets.dart';
+
+/// Fallback support contact channels, used until the admin-managed values
+/// load from `/api/settings/public` (key `support_phone`).
+const _defaultSupportPhone = '966561883558'; // no '+' for wa.me
+const _supportEmail = 'support@sporta.sa';
+
+/// Saudi local (05xxxxxxxx) or already-international phone → wa.me digits.
+String _waNumber(String raw) {
+  var d = raw.replaceAll(RegExp(r'[^0-9]'), '');
+  if (d.startsWith('00')) d = d.substring(2);
+  if (d.startsWith('0')) d = '966${d.substring(1)}';
+  return d;
+}
 
 class ContactUsPage extends StatefulWidget {
   const ContactUsPage({super.key, required this.onBack});
@@ -16,8 +39,41 @@ class _ContactUsPageState extends State<ContactUsPage> {
   String _subject = '';
   String _message = '';
   bool _emailSent = false;
+  String _supportPhone = _defaultSupportPhone;
+
+  /// ردود الدعم التي لم يفتحها المستخدم — شارة بطاقة الدردشة المباشرة.
+  int _unreadChat = 0;
+
   final _subjectCtrl = TextEditingController();
   final _messageCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSupportPhone();
+    _loadUnreadChat();
+  }
+
+  Future<void> _loadUnreadChat() async {
+    try {
+      final count = await getIt<SupportRepository>().fetchUnreadCount();
+      if (mounted) setState(() => _unreadChat = count);
+    } catch (_) {
+      // بلا شارة إذا تعذّر الجلب — لا تُعطّل بقية الصفحة.
+    }
+  }
+
+  Future<void> _loadSupportPhone() async {
+    try {
+      final settings = await getIt<SettingsRepository>().fetchPublicSettings();
+      final raw = settings['support_phone']?.valueAr;
+      if (mounted && raw != null && raw.trim().isNotEmpty) {
+        setState(() => _supportPhone = _waNumber(raw));
+      }
+    } catch (_) {
+      // Keep the default number if the fetch fails.
+    }
+  }
 
   @override
   void dispose() {
@@ -26,8 +82,30 @@ class _ContactUsPageState extends State<ContactUsPage> {
     super.dispose();
   }
 
-  void _sendEmail() {
+  Future<void> _launch(Uri uri) async {
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.tr('تعذّر فتح التطبيق'))));
+    }
+  }
+
+  void _openWhatsApp() {
+    _launch(Uri.parse('https://wa.me/$_supportPhone'));
+  }
+
+  Future<void> _sendEmail() async {
     if (_subject.isEmpty || _message.isEmpty) return;
+    final uri = Uri(
+      scheme: 'mailto',
+      path: _supportEmail,
+      query:
+          'subject=${Uri.encodeComponent(_subject)}'
+          '&body=${Uri.encodeComponent(_message)}',
+    );
+    await _launch(uri);
+    if (!mounted) return;
     setState(() => _emailSent = true);
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
@@ -45,7 +123,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: ColoredBox(
         color: AppColors.background,
         child: Column(
@@ -53,7 +131,9 @@ class _ContactUsPageState extends State<ContactUsPage> {
             _buildHeader(),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(AppSizes.pagePadding),
+                padding: context.safeBottom(
+                  const EdgeInsets.all(AppSizes.pagePadding),
+                ),
                 children: [
                   _buildInfoCard(),
                   const SizedBox(height: AppSizes.lg),
@@ -102,17 +182,21 @@ class _ContactUsPageState extends State<ContactUsPage> {
                   customBorder: const CircleBorder(),
                   child: const Padding(
                     padding: EdgeInsets.all(AppSizes.sm),
-                    child: Icon(Icons.chevron_right,
-                        size: AppSizes.iconMd, color: Colors.white),
+                    child: DirectionalIcon(
+                      rtl: Icons.chevron_right,
+                      ltr: Icons.chevron_left,
+                      size: AppSizes.iconMd,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'اتصل بنا',
+                  context.tr('اتصل بنا'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
@@ -143,15 +227,18 @@ class _ContactUsPageState extends State<ContactUsPage> {
               color: AppColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(AppSizes.radiusLg),
             ),
-            child: const Icon(Icons.support_agent,
-                size: AppSizes.iconSm, color: AppColors.primary),
+            child: const Icon(
+              Icons.support_agent,
+              size: AppSizes.iconSm,
+              color: AppColors.primary,
+            ),
           ),
           const SizedBox(width: AppSizes.md),
-          const Expanded(
+          Expanded(
             child: Text(
-              'نحن هنا لمساعدتك! اختر طريقة التواصل المفضلة',
+              context.tr('نحن هنا لمساعدتك! اختر طريقة التواصل المفضلة'),
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 color: AppColors.primary,
                 height: 1.5,
               ),
@@ -164,11 +251,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
 
   Widget _buildWhatsAppCard() {
     return InkWell(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('سيتم فتح واتساب')),
-        );
-      },
+      onTap: _openWhatsApp,
       borderRadius: BorderRadius.circular(AppSizes.radiusXl),
       child: Container(
         padding: const EdgeInsets.all(AppSizes.lg),
@@ -194,31 +277,42 @@ class _ContactUsPageState extends State<ContactUsPage> {
                 ),
                 borderRadius: BorderRadius.circular(AppSizes.radiusLg),
               ),
-              child: const Icon(Icons.message_outlined,
-                  color: Colors.white, size: AppSizes.iconMd),
+              child: const Icon(
+                Icons.message_outlined,
+                color: Colors.white,
+                size: AppSizes.iconMd,
+              ),
             ),
             SizedBox(width: AppSizes.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('واتساب',
-                      style: AppTextStyles.body.copyWith(
-                          color: AppColors.secondary,
-                          fontWeight: FontWeight.w600)),
+                  Text(
+                    context.tr('واتساب'),
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.secondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   Directionality(
                     textDirection: TextDirection.ltr,
                     child: Text(
-                      '+966 56 188 3558',
+                      '+$_supportPhone',
                       style: AppTextStyles.bodySmall.copyWith(
-                          color: const Color(0xFF16A34A)),
+                        color: const Color(0xFF16A34A),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_left,
-                size: AppSizes.iconMd, color: AppColors.mutedForeground),
+            DirectionalIcon(
+              rtl: Icons.chevron_left,
+              ltr: Icons.chevron_right,
+              size: AppSizes.iconMd,
+              color: AppColors.mutedForeground,
+            ),
           ],
         ),
       ),
@@ -232,10 +326,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
         borderRadius: BorderRadius.circular(AppSizes.radiusXl),
         border: Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
         ],
       ),
       child: Padding(
@@ -254,21 +345,30 @@ class _ContactUsPageState extends State<ContactUsPage> {
                     ),
                     borderRadius: BorderRadius.circular(AppSizes.radiusLg),
                   ),
-                  child: const Icon(Icons.email_outlined,
-                      color: Colors.white, size: AppSizes.iconMd),
+                  child: const Icon(
+                    Icons.email_outlined,
+                    color: Colors.white,
+                    size: AppSizes.iconMd,
+                  ),
                 ),
                 SizedBox(width: AppSizes.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('البريد الإلكتروني',
-                          style: AppTextStyles.body.copyWith(
-                              color: AppColors.secondary,
-                              fontWeight: FontWeight.w600)),
-                      Text('support@sporta.sa',
-                          style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.mutedForeground)),
+                      Text(
+                        context.tr('البريد الإلكتروني'),
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.secondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        'support@sporta.sa',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.mutedForeground,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -286,13 +386,19 @@ class _ContactUsPageState extends State<ContactUsPage> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle_outline,
-                        color: Color(0xFF16A34A), size: AppSizes.iconMd),
+                    const Icon(
+                      Icons.check_circle_outline,
+                      color: Color(0xFF16A34A),
+                      size: AppSizes.iconMd,
+                    ),
                     SizedBox(width: AppSizes.sm),
-                    Text('تم إرسال رسالتك بنجاح!',
-                        style: AppTextStyles.bodySmall.copyWith(
-                            color: const Color(0xFF16A34A),
-                            fontWeight: FontWeight.w600)),
+                    Text(
+                      context.tr('تم إرسال رسالتك بنجاح!'),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: const Color(0xFF16A34A),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               )
@@ -301,10 +407,10 @@ class _ContactUsPageState extends State<ContactUsPage> {
                 controller: _subjectCtrl,
                 onChanged: (v) => setState(() => _subject = v),
                 decoration: InputDecoration(
-                  labelText: 'الموضوع',
+                  labelText: context.tr('الموضوع'),
                   border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusLg)),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                  ),
                 ),
               ),
               const SizedBox(height: AppSizes.md),
@@ -313,10 +419,10 @@ class _ContactUsPageState extends State<ContactUsPage> {
                 onChanged: (v) => setState(() => _message = v),
                 maxLines: 4,
                 decoration: InputDecoration(
-                  labelText: 'الرسالة',
+                  labelText: context.tr('الرسالة'),
                   border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusLg)),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                  ),
                   alignLabelWithHint: true,
                 ),
               ),
@@ -329,25 +435,25 @@ class _ContactUsPageState extends State<ContactUsPage> {
                       ? _sendEmail
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: (_subject.isNotEmpty &&
-                            _message.isNotEmpty)
+                    backgroundColor:
+                        (_subject.isNotEmpty && _message.isNotEmpty)
                         ? const Color(0xFF2563EB)
                         : const Color(0xFFE5E7EB),
-                    foregroundColor: (_subject.isNotEmpty &&
-                            _message.isNotEmpty)
+                    foregroundColor:
+                        (_subject.isNotEmpty && _message.isNotEmpty)
                         ? Colors.white
                         : AppColors.mutedForeground,
                     shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.radiusLg)),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                    ),
                     elevation: 0,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
+                    children: [
                       Icon(Icons.send, size: AppSizes.iconSm),
                       SizedBox(width: AppSizes.sm),
-                      Text('إرسال الرسالة'),
+                      Text(context.tr('إرسال الرسالة')),
                     ],
                   ),
                 ),
@@ -359,13 +465,22 @@ class _ContactUsPageState extends State<ContactUsPage> {
     );
   }
 
+  /// الدردشة الفورية مع الإدارة (SignalR). كانت هذه البطاقة تفتح واتساب قبل
+  /// وجود الدردشة داخل التطبيق.
+  Future<void> _openLiveChat() async {
+    // الدردشة مربوطة بحساب — الزائر يُدعى لتسجيل الدخول (واتساب والبريد يبقيان).
+    if (await guestBlocked(context)) return;
+    if (!mounted) return;
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const SupportChatPage()));
+    // فتح الشاشة يختم الردود كمقروءة — نُحدّث الشارة عند الرجوع.
+    if (mounted) await _loadUnreadChat();
+  }
+
   Widget _buildLiveChatCard() {
     return InkWell(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('سيتم فتح الدردشة المباشرة')),
-        );
-      },
+      onTap: _openLiveChat,
       borderRadius: BorderRadius.circular(AppSizes.radiusXl),
       child: Container(
         padding: const EdgeInsets.all(AppSizes.lg),
@@ -391,20 +506,28 @@ class _ContactUsPageState extends State<ContactUsPage> {
                 ),
                 borderRadius: BorderRadius.circular(AppSizes.radiusLg),
               ),
-              child: const Icon(Icons.chat_bubble_outline,
-                  color: Colors.white, size: AppSizes.iconMd),
+              child: const Icon(
+                Icons.chat_bubble_outline,
+                color: Colors.white,
+                size: AppSizes.iconMd,
+              ),
             ),
             SizedBox(width: AppSizes.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('الدردشة المباشرة',
-                      style: AppTextStyles.body.copyWith(
-                          color: AppColors.secondary,
-                          fontWeight: FontWeight.w600)),
-                  Text('تحدث مع فريق الدعم مباشرة',
-                      style: AppTextStyles.caption),
+                  Text(
+                    context.tr('الدردشة المباشرة'),
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.secondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    context.tr('تحدث مع فريق الدعم مباشرة'),
+                    style: AppTextStyles.caption,
+                  ),
                   SizedBox(height: AppSizes.xs),
                   Row(
                     children: [
@@ -417,16 +540,46 @@ class _ContactUsPageState extends State<ContactUsPage> {
                         ),
                       ),
                       SizedBox(width: AppSizes.xs),
-                      Text('متصل الآن',
-                          style: AppTextStyles.caption.copyWith(
-                              color: const Color(0xFF16A34A))),
+                      Text(
+                        context.tr('متصل الآن'),
+                        style: AppTextStyles.caption.copyWith(
+                          color: const Color(0xFF16A34A),
+                        ),
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_left,
-                size: AppSizes.iconMd, color: AppColors.mutedForeground),
+            if (_unreadChat > 0)
+              Container(
+                constraints: const BoxConstraints(minWidth: 20),
+                height: 20,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                margin: const EdgeInsets.only(
+                  left: AppSizes.xs,
+                  right: AppSizes.xs,
+                ),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.destructive,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+                ),
+                child: Text(
+                  '$_unreadChat',
+                  style: AppTextStyles.caption.copyWith(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            DirectionalIcon(
+              rtl: Icons.chevron_left,
+              ltr: Icons.chevron_right,
+              size: AppSizes.iconMd,
+              color: AppColors.mutedForeground,
+            ),
           ],
         ),
       ),
@@ -446,19 +599,25 @@ class _ContactUsPageState extends State<ContactUsPage> {
         children: [
           Row(
             children: [
-              const Icon(Icons.access_time,
-                  size: AppSizes.iconSm, color: AppColors.mutedForeground),
+              const Icon(
+                Icons.access_time,
+                size: AppSizes.iconSm,
+                color: AppColors.mutedForeground,
+              ),
               SizedBox(width: AppSizes.sm),
-              Text('أوقات العمل',
-                  style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.secondary,
-                      fontWeight: FontWeight.w600)),
+              Text(
+                context.tr('أوقات العمل'),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.secondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
           SizedBox(height: AppSizes.md),
-          _hoursRow('السبت - الخميس:', '9:00 صباحاً - 6:00 مساءً'),
+          _hoursRow(trg('السبت - الخميس:'), trg('9:00 صباحاً - 6:00 مساءً')),
           SizedBox(height: AppSizes.sm),
-          _hoursRow('الجمعة:', 'مغلق'),
+          _hoursRow(trg('الجمعة:'), trg('مغلق')),
         ],
       ),
     );
@@ -468,12 +627,19 @@ class _ContactUsPageState extends State<ContactUsPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(day,
-            style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.mutedForeground)),
-        Text(hours,
-            style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.secondary, fontWeight: FontWeight.w500)),
+        Text(
+          day,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.mutedForeground,
+          ),
+        ),
+        Text(
+          hours,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.secondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ],
     );
   }

@@ -1,48 +1,76 @@
 import '../domain/entities/court_entity.dart';
+import '../../../core/localization/tr_global.dart';
 
-/// Peak pricing applies from 16:00 onwards (matches the backend schedule).
+/// تقدير محلي فقط: يُستخدم قبل وصول تسعير الخادم (POST /bookings/quote) أو حين
+/// يتعذّر جلبه. السعر النهائي يأتي دائماً من الخادم لأنه وحده يعرف قواعد تسعير
+/// المالك وخصم باقة اللاعب.
+///
+/// ساعات الذروة الافتراضية من ١٦:٠٠ — دقيقة فقط للملاعب التي لم يضبط مالكها
+/// قواعد تسعير خاصة.
 bool isPeakHour(String time) {
   final hour = int.tryParse(time.split(':').first) ?? 0;
   return hour >= 16;
 }
 
-/// Hourly rate for a slot starting at [time].
+/// Gross hourly rate (incl. نسبة سبورتا) for a slot starting at [time].
 int slotPrice(CourtEntity court, String time) =>
-    isPeakHour(time) ? court.peakHourPrice : court.basePrice;
+    isPeakHour(time) ? court.peakHourPrice : court.totalPrice;
 
 /// Total price for a session of [durationMinutes] starting at [time].
-int sessionTotalPrice(CourtEntity court, String time, int durationMinutes) =>
-    (slotPrice(court, time) * (durationMinutes / 60)).round();
+/// Prefers the owner's booking tier (matches the backend), falling back to the
+/// legacy hourly computation when no tier is defined for the duration.
+int sessionTotalPrice(CourtEntity court, String time, int durationMinutes) {
+  final tier = court.bookingPriceFor(durationMinutes);
+  if (tier != null) return tier.round();
+  final hourly = slotPrice(court, time);
+  // ملعب سعّره مالكه بالمدد وحدها: سعر ساعته صفر، فتُشتقّ من أطول شريحة —
+  // نفس ما يفعله الخادم في CourtSchedule.BasePrice.
+  if (hourly <= 0) {
+    final longest = court.bookingPrices
+        .where((t) => t.durationMinutes > 0 && t.price > 0)
+        .fold<CourtPriceTier?>(
+          null,
+          (best, t) => best == null || t.durationMinutes > best.durationMinutes
+              ? t
+              : best,
+        );
+    if (longest != null) {
+      return (longest.price / longest.durationMinutes * durationMinutes)
+          .round();
+    }
+  }
+  return (hourly * (durationMinutes / 60)).round();
+}
 
 String courtTypeLabel(CourtType type) {
   switch (type) {
     case CourtType.indoor:
-      return 'مغطى';
+      return trg('مغطى');
     case CourtType.outdoor:
-      return 'مفتوح';
+      return trg('مفتوح');
   }
 }
 
 String courtGenderLabel(CourtGender gender) {
   switch (gender) {
     case CourtGender.all:
-      return 'مختلط';
+      return trg('مختلط');
     case CourtGender.men:
-      return 'رجال';
+      return trg('رجال');
     case CourtGender.women:
-      return 'نساء';
+      return trg('نساء');
     case CourtGender.family:
-      return 'عائلي';
+      return trg('عائلي');
   }
 }
 
 /// Client-side filtering/sorting applied on top of the courts returned by the
-/// API (search text, price band, rating, sort order).
+/// API (search text, price band, rating, sort order). The city is *not* handled
+/// here — the API filters by it, so a local pass would only see the loaded page.
 List<CourtEntity> filterCourts({
   required List<CourtEntity> courts,
   required String query,
   required String sortBy,
-  required String selectedCity,
   required CourtType? selectedType,
   required CourtGender? selectedGender,
   required String priceRange,
@@ -57,10 +85,6 @@ List<CourtEntity> filterCourts({
             c.city.contains(query) ||
             c.neighborhood.contains(query))
         .toList();
-  }
-
-  if (selectedCity.isNotEmpty) {
-    result = result.where((c) => c.city == selectedCity).toList();
   }
 
   if (selectedType != null) {

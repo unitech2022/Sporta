@@ -1,22 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:sporta_app/app/main_shell.dart';
+import 'package:sporta_app/core/di/service_locator.dart';
 import 'package:sporta_app/core/state/app_scope.dart';
 import 'package:sporta_app/core/state/app_settings.dart';
+import 'package:sporta_app/features/auth/presentation/cubit/auth_cubit.dart';
 
+/// نفس تركيب [SportaApp]: التبويبات تقرأ المستخدم الحالي من AuthCubit.
 Widget _app() => AppScope(
       settings: AppSettings(),
-      child: const MaterialApp(
-        home: Directionality(
-          textDirection: TextDirection.rtl,
-          child: MainShell(),
+      child: BlocProvider<AuthCubit>.value(
+        value: getIt<AuthCubit>(),
+        child: const MaterialApp(
+          home: Directionality(
+            textDirection: TextDirection.rtl,
+            child: MainShell(),
+          ),
         ),
       ),
     );
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  // الصفحات تسحب الكيوبتات والمستودعات وإعدادات اللغة من getIt كما في main().
+  // كل التسجيلات كسولة فلا يُنشأ شيء ما لم تطلبه الصفحة.
+  setUpAll(() {
+    if (!getIt.isRegistered<AppSettings>()) setupLocator();
+  });
 
   testWidgets('MainShell builds all tabs without exception', (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));

@@ -13,6 +13,7 @@ class TintedCard extends StatelessWidget {
     this.radius = AppSizes.radiusXl,
     this.borderWidth = 1,
     this.onTap,
+    this.backgroundColor,
   });
 
   final Color tint;
@@ -22,12 +23,16 @@ class TintedCard extends StatelessWidget {
   final double borderWidth;
   final VoidCallback? onTap;
 
+  /// Overrides the default soft tint background (e.g. [Colors.white]).
+  final Color? backgroundColor;
+
   @override
   Widget build(BuildContext context) {
     final borderRadius = BorderRadius.circular(radius);
 
     return Material(
-      color: Color.alphaBlend(tint.withValues(alpha: 0.08), Colors.white),
+      color: backgroundColor ??
+          Color.alphaBlend(tint.withValues(alpha: 0.08), Colors.white),
       shape: RoundedRectangleBorder(
         borderRadius: borderRadius,
         side: BorderSide(

@@ -1,3 +1,4 @@
+import 'package:sporta_app/core/state/app_scope.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
@@ -41,7 +42,7 @@ class CourtsErrorView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppSizes.radiusLg),
                 ),
               ),
-              child: const Text('إعادة المحاولة'),
+              child: Text(context.tr('إعادة المحاولة')),
             ),
           ],
         ),
@@ -66,14 +67,12 @@ class CourtsEmptyView extends StatelessWidget {
             color: AppColors.mutedForeground.withValues(alpha: 0.4),
           ),
           const SizedBox(height: AppSizes.lg),
-          Text(
-            'لا توجد ملاعب',
+          Text(context.tr('لا توجد ملاعب'),
             style: AppTextStyles.heading2
                 .copyWith(color: AppColors.mutedForeground),
           ),
           const SizedBox(height: AppSizes.sm),
-          Text(
-            'جرّب تغيير معايير البحث أو الفلاتر',
+          Text(context.tr('جرّب تغيير معايير البحث أو الفلاتر'),
             style: AppTextStyles.body.copyWith(color: AppColors.mutedForeground),
           ),
         ],

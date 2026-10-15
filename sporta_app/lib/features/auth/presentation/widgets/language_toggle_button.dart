@@ -4,13 +4,24 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/localization/app_translations.dart';
 import '../../../../core/state/app_scope.dart';
+import '../../../../core/storage/local_prefs.dart';
+import '../state/auth_scope.dart';
+import '../../../../core/localization/tr_global.dart';
 
 /// Pill button on auth screens that switches between Arabic and English.
 class LanguageToggleButton extends StatelessWidget {
-  const LanguageToggleButton({super.key, this.compact = false});
+  const LanguageToggleButton({
+    super.key,
+    this.compact = false,
+    this.inPlace = false,
+  });
 
   /// Compact shows "EN"/"ع" instead of the full language name.
   final bool compact;
+
+  /// يبدّل اللغة في مكانها بلا إعادة تشغيل التطبيق — لصفحات فيها مدخلات لم
+  /// تُحفظ بعد (التسجيل): إعادة التشغيل تعيد إلى شاشة البداية فيضيع ما كُتب.
+  final bool inPlace;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +29,7 @@ class LanguageToggleButton extends StatelessWidget {
     final isArabic = settings.language == AppLanguage.ar;
     final label = compact
         ? (isArabic ? 'EN' : 'ع')
-        : (isArabic ? 'English' : 'العربية');
+        : (isArabic ? 'English' : trg('العربية'));
 
     return Material(
       color: Colors.white.withValues(alpha: 0.1),
@@ -26,8 +37,17 @@ class LanguageToggleButton extends StatelessWidget {
         side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
       ),
       child: InkWell(
-        onTap: () => settings
-            .setLanguage(isArabic ? AppLanguage.en : AppLanguage.ar),
+        // Full updateLanguage path: persists the choice and reopens the app
+        // from the splash screen in the new language.
+        onTap: () {
+          final next = isArabic ? AppLanguage.en : AppLanguage.ar;
+          if (inPlace) {
+            settings.setLanguage(next);
+            LocalPrefs.setLanguage(next.name);
+          } else {
+            context.auth.updateLanguage(next);
+          }
+        },
         customBorder: const StadiumBorder(),
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -40,11 +60,18 @@ class LanguageToggleButton extends StatelessWidget {
               const Icon(Icons.translate, size: AppSizes.iconSm,
                   color: Colors.white),
               SizedBox(width: AppSizes.sm),
-              Text(
-                label,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
+              // Flexible: an early frame can lay the pill out narrower than
+              // its label — ellipsize instead of overflowing the Row.
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],

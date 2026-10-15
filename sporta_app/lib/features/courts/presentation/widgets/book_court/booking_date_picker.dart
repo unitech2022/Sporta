@@ -1,3 +1,4 @@
+import 'package:sporta_app/core/state/app_scope.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
@@ -23,8 +24,7 @@ class BookingDatePicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'اختر التاريخ',
+        Text(context.tr('اختر التاريخ'),
           style: AppTextStyles.heading2.copyWith(color: AppColors.secondary),
         ),
         const SizedBox(height: AppSizes.md),
@@ -108,6 +108,51 @@ class _DateCell extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// تنبيه نافذة الحجز تحت شريط التواريخ: غير العضو يعرف أن الأعضاء يحجزون
+/// أبكر، والعضو يرى أن أيام الأولوية مفعّلة له.
+class BookingWindowNote extends StatelessWidget {
+  const BookingWindowNote({
+    super.key,
+    required this.days,
+    required this.isMember,
+  });
+
+  final int days;
+  final bool isMember;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isMember ? AppColors.success : AppColors.mutedForeground;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSizes.sm),
+      child: Row(
+        children: [
+          Icon(
+            isMember ? Icons.workspace_premium : Icons.lock_clock_outlined,
+            size: 16,
+            color: color,
+          ),
+          const SizedBox(width: AppSizes.xs),
+          Expanded(
+            child: Text(
+              isMember
+                  ? context.trArgs(
+                      'عضويتك تتيح لك الحجز قبل {p0} يوماً',
+                      {'p0': days},
+                    )
+                  : context.trArgs(
+                      'الحجز متاح قبل {p0} أيام — أعضاء النادي يحجزون أبكر',
+                      {'p0': days},
+                    ),
+              style: AppTextStyles.caption.copyWith(color: color),
+            ),
+          ),
+        ],
       ),
     );
   }

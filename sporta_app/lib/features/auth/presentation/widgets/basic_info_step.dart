@@ -1,14 +1,21 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/network/nominatim_service.dart';
 import '../../../../core/state/app_scope.dart';
-import '../../../../core/state/app_settings.dart';
+import '../../../../core/utils/current_location.dart';
 import '../../../../core/utils/phone_input.dart';
+import '../../../locations/presentation/city_district_selector.dart';
+import '../../../venue/presentation/pages/location_picker_page.dart';
 import '../../domain/entities/registration_data.dart';
 import 'labeled_input.dart';
+import '../../../../core/localization/tr_global.dart';
 
 class BasicInfoStep extends StatefulWidget {
   const BasicInfoStep({
@@ -25,26 +32,34 @@ class BasicInfoStep extends StatefulWidget {
 }
 
 class BasicInfoStepState extends State<BasicInfoStep> {
-  bool _showPassword = false;
   String? _genderError;
+  String? _locationError;
+  String? _pickedAddress;
+
+  /// قراءة GPS جارية الآن (تلقائياً عند فتح الخطوة أو بضغط "إعادة المحاولة").
+  bool _locating = false;
 
   late final _firstNameCtrl = TextEditingController(text: widget.data.firstName);
   late final _lastNameCtrl = TextEditingController(text: widget.data.lastName);
-  late final _emailCtrl = TextEditingController(text: widget.data.email);
   late final _phoneCtrl = TextEditingController(text: widget.data.phone);
-  late final _passwordCtrl = TextEditingController(text: widget.data.password);
-  late final _cityCtrl = TextEditingController(text: widget.data.city);
-  late final _districtCtrl = TextEditingController(text: widget.data.district);
+
+  @override
+  void initState() {
+    super.initState();
+    // الموقع إلزامي، وأدقّ مصدر له قراءة الجهاز نفسها لا نقطة يقرّبها المستخدم
+    // على الخريطة — فنطلبها فور فتح الخطوة ونترك الخريطة للتعديل فقط.
+    if (widget.data.latitude == null || widget.data.longitude == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _locateMe());
+    } else {
+      _resolveAddress(widget.data.latitude!, widget.data.longitude!);
+    }
+  }
 
   @override
   void dispose() {
     _firstNameCtrl.dispose();
     _lastNameCtrl.dispose();
-    _emailCtrl.dispose();
     _phoneCtrl.dispose();
-    _passwordCtrl.dispose();
-    _cityCtrl.dispose();
-    _districtCtrl.dispose();
     super.dispose();
   }
 
@@ -52,42 +67,197 @@ class BasicInfoStepState extends State<BasicInfoStep> {
   bool validate() {
     final formValid = widget.formKey.currentState?.validate() ?? false;
     final genderValid = widget.data.gender.isNotEmpty;
+    final locationValid =
+        widget.data.latitude != null && widget.data.longitude != null;
     if (!genderValid) {
       setState(() => _genderError = context.tr('genderRequired'));
     }
-    return formValid && genderValid;
+    if (!locationValid) {
+      setState(() => _locationError = context.tr('locationRequired'));
+    }
+    return formValid && genderValid && locationValid;
   }
 
-  /// Fills the form with unique dummy data (development helper). Phone/email
-  /// are timestamped so repeated registrations don't collide on the server.
-  void autofill() {
-    final suffix = DateTime.now().millisecondsSinceEpoch;
-    final phone = '05${(suffix % 100000000).toString().padLeft(8, '0')}';
-    final email = 'test$suffix@sporta.app';
-
-    _firstNameCtrl.text = 'أحمد';
-    _lastNameCtrl.text = 'العتيبي';
-    _emailCtrl.text = email;
-    _phoneCtrl.text = phone;
-    _passwordCtrl.text = 'Test1234';
-    _cityCtrl.text = 'الرياض';
-    _districtCtrl.text = 'النخيل';
-
-    widget.data
-      ..firstName = 'أحمد'
-      ..lastName = 'العتيبي'
-      ..email = email
-      ..phone = phone
-      ..password = 'Test1234'
-      ..city = 'الرياض'
-      ..district = 'النخيل'
-      ..gender = 'male';
-    if (widget.data.roles.isEmpty) widget.data.roles.add(UserRole.player);
-
+  /// يقرأ إحداثيات الجهاز بأعلى دقة متاحة ويعبّئ بها بيانات التسجيل.
+  Future<void> _locateMe() async {
+    if (_locating) return;
     setState(() {
-      _genderError = null;
-      _showPassword = true;
+      _locating = true;
+      _locationError = null;
     });
+    final pos = await currentDeviceLocation();
+    if (!mounted) return;
+    if (pos == null) {
+      setState(() {
+        _locating = false;
+        _locationError = context.tr('locationUnavailable');
+      });
+      return;
+    }
+    widget.data.latitude = pos.latitude;
+    widget.data.longitude = pos.longitude;
+    setState(() {
+      _locating = false;
+      _pickedAddress = null;
+    });
+    _resolveAddress(pos.latitude, pos.longitude);
+  }
+
+  /// عنوان مقروء للإحداثيات — للعرض فقط؛ الإحداثيات هي ما يُرسل للخادم.
+  Future<void> _resolveAddress(double lat, double lng) async {
+    final resolved = await NominatimService().reverse(lat, lng);
+    if (!mounted || resolved == null) return;
+    setState(() => _pickedAddress = resolved.displayName);
+  }
+
+  Future<void> _pickLocation() async {
+    final initial = widget.data.latitude != null && widget.data.longitude != null
+        ? LatLng(widget.data.latitude!, widget.data.longitude!)
+        : null;
+    final picked = await Navigator.of(context).push<PickedLocation>(
+      MaterialPageRoute(
+        builder: (_) => LocationPickerPage(
+          initial: initial,
+          title: context.tr('حدد موقعي على الخريطة'),
+        ),
+      ),
+    );
+    if (picked == null) return;
+    setState(() {
+      widget.data.latitude = picked.latLng.latitude;
+      widget.data.longitude = picked.latLng.longitude;
+      _pickedAddress = picked.displayAddress;
+      _locationError = null;
+    });
+  }
+
+  Widget _buildLocationField() {
+    final hasLoc = widget.data.latitude != null && widget.data.longitude != null;
+    final failed = _locationError != null && !hasLoc;
+    final borderColor = failed
+        ? AppColors.destructive
+        : hasLoc
+            ? AppColors.primary
+            : AppColors.border;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${context.tr('currentLocation')} *',
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.secondary),
+        ),
+        const SizedBox(height: AppSizes.sm),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSizes.md),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+            border: Border.all(color: borderColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  if (_locating)
+                    const SizedBox(
+                      width: AppSizes.iconMd,
+                      height: AppSizes.iconMd,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    Icon(
+                      hasLoc ? Icons.location_on : Icons.location_off_outlined,
+                      size: AppSizes.iconMd,
+                      color: hasLoc
+                          ? AppColors.primary
+                          : AppColors.mutedForeground,
+                    ),
+                  const SizedBox(width: AppSizes.sm),
+                  Expanded(
+                    child: Text(
+                      _locationStatusText(hasLoc),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.bodySmall
+                          .copyWith(color: AppColors.secondary),
+                    ),
+                  ),
+                ],
+              ),
+              if (hasLoc) ...[
+                const SizedBox(height: AppSizes.xs),
+                Text(
+                  '${widget.data.latitude!.toStringAsFixed(5)}, '
+                  '${widget.data.longitude!.toStringAsFixed(5)}',
+                  style: AppTextStyles.caption
+                      .copyWith(color: AppColors.mutedForeground),
+                ),
+              ],
+              const SizedBox(height: AppSizes.sm),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton.icon(
+                      onPressed: _locating ? null : _locateMe,
+                      icon: const Icon(Icons.my_location, size: AppSizes.iconSm),
+                      label: Text(
+                        context.tr('useMyCurrentLocation'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodySmall
+                            .copyWith(color: AppColors.primary),
+                      ),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: TextButton.icon(
+                      onPressed: _pickLocation,
+                      icon: const Icon(Icons.map_outlined, size: AppSizes.iconSm),
+                      label: Text(
+                        context.tr('adjustOnMap'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodySmall
+                            .copyWith(color: AppColors.primary),
+                      ),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        if (_locationError != null) ...[
+          const SizedBox(height: AppSizes.xs),
+          Text(
+            _locationError!,
+            style:
+                AppTextStyles.caption.copyWith(color: AppColors.destructive),
+          ),
+        ],
+        const SizedBox(height: AppSizes.xs),
+        Text(
+          context.tr('locationAccuracyHint'),
+          style:
+              AppTextStyles.caption.copyWith(color: AppColors.mutedForeground),
+        ),
+      ],
+    );
+  }
+
+  String _locationStatusText(bool hasLoc) {
+    if (_locating) return context.tr('locatingNow');
+    if (!hasLoc) return context.tr('locationNotSet');
+    return _pickedAddress ?? context.tr('locationCaptured');
   }
 
   @override
@@ -97,66 +267,44 @@ class BasicInfoStepState extends State<BasicInfoStep> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // العنوان يظهر في هيدر التسجيل — لا حاجة لتكراره هنا.
+          Center(child: _AvatarPicker(data: widget.data)),
+          const SizedBox(height: AppSizes.xl),
+          _sectionHeader(Icons.person_outline, trg('البيانات الشخصية')),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  context.tr('register'),
-                  style: AppTextStyles.heading1
-                      .copyWith(color: AppColors.secondary),
+                child: LabeledInput(
+                  label: '${context.tr('firstName')} *',
+                  hint: context.tr('firstNameHint'),
+                  controller: _firstNameCtrl,
+                  onChanged: (v) => widget.data.firstName = v,
+                  validator: _nameValidator,
+                  textInputAction: TextInputAction.next,
                 ),
               ),
-              if (kDebugMode)
-                OutlinedButton.icon(
-                  onPressed: autofill,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.md,
-                      vertical: AppSizes.sm,
-                    ),
-                  ),
-                  icon: const Icon(Icons.bolt, size: AppSizes.iconSm),
-                  label: const Text('ملء تلقائي'),
+              const SizedBox(width: AppSizes.md),
+              Expanded(
+                child: LabeledInput(
+                  label: '${context.tr('lastName')} *',
+                  hint: context.tr('lastNameHint'),
+                  controller: _lastNameCtrl,
+                  onChanged: (v) => widget.data.lastName = v,
+                  validator: _nameValidator,
+                  textInputAction: TextInputAction.next,
                 ),
+              ),
             ],
           ),
-          const SizedBox(height: AppSizes.xxl),
-          const Center(child: _AvatarPicker()),
-          const SizedBox(height: AppSizes.xxl),
-          LabeledInput(
-            label: '${context.tr('firstName')} *',
-            hint: context.tr('firstNameHint'),
-            controller: _firstNameCtrl,
-            onChanged: (v) => widget.data.firstName = v,
-            validator: _nameValidator,
-            textInputAction: TextInputAction.next,
+          const SizedBox(height: AppSizes.md),
+          _GenderSelector(
+            data: widget.data,
+            error: _genderError,
+            onChanged: () => setState(() => _genderError = null),
           ),
           const SizedBox(height: AppSizes.xl),
-          LabeledInput(
-            label: '${context.tr('lastName')} *',
-            hint: context.tr('lastNameHint'),
-            controller: _lastNameCtrl,
-            onChanged: (v) => widget.data.lastName = v,
-            validator: _nameValidator,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: AppSizes.xl),
-          LabeledInput(
-            label: '${context.tr('email')} *',
-            hint: 'example@email.com',
-            icon: Icons.mail_outline,
-            controller: _emailCtrl,
-            keyboardType: TextInputType.emailAddress,
-            onChanged: (v) => widget.data.email = v,
-            validator: _emailValidator,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: AppSizes.xl),
+          _sectionHeader(Icons.lock_outline, trg('بيانات التواصل والدخول')),
           LabeledInput(
             label: '${context.tr('phone')} *',
             hint: '05xxxxxxxx',
@@ -169,52 +317,23 @@ class BasicInfoStepState extends State<BasicInfoStep> {
             textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: AppSizes.xl),
-          LabeledInput(
-            label: '${context.tr('password')} *',
-            hint: '••••••••',
-            controller: _passwordCtrl,
-            obscureText: !_showPassword,
-            onChanged: (v) => widget.data.password = v,
-            validator: _passwordValidator,
-            textInputAction: TextInputAction.next,
-            suffixIcon: IconButton(
-              onPressed: () => setState(() => _showPassword = !_showPassword),
-              icon: Icon(
-                _showPassword
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
-                color: AppColors.mutedForeground,
-                size: AppSizes.iconMd,
-              ),
-            ),
+          _sectionHeader(Icons.place_outlined, trg('العنوان')),
+          CityDistrictSelector(
+            initialCityId: widget.data.cityId,
+            initialDistrictId: widget.data.districtId,
+            onChanged: (city, district) {
+              final rtl = Directionality.of(context) == TextDirection.rtl;
+              widget.data.cityId = city?.id;
+              widget.data.city =
+                  city == null ? '' : (rtl ? city.nameAr : city.nameEn);
+              widget.data.districtId = district?.id;
+              widget.data.district =
+                  district == null ? '' : (rtl ? district.nameAr : district.nameEn);
+            },
           ),
+          const SizedBox(height: AppSizes.md),
+          _buildLocationField(),
           const SizedBox(height: AppSizes.xl),
-          _GenderSelector(
-            data: widget.data,
-            error: _genderError,
-            onChanged: () => setState(() => _genderError = null),
-          ),
-          const SizedBox(height: AppSizes.xl),
-          LabeledInput(
-            label: '${context.tr('city')} *',
-            hint: context.tr('cityHint'),
-            controller: _cityCtrl,
-            onChanged: (v) => widget.data.city = v,
-            validator: (v) => (v == null || v.trim().isEmpty)
-                ? context.tr('cityRequired')
-                : null,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: AppSizes.xl),
-          LabeledInput(
-            label: context.tr('district'),
-            hint: context.tr('districtHint'),
-            icon: Icons.location_on_outlined,
-            controller: _districtCtrl,
-            onChanged: (v) => widget.data.district = v,
-            textInputAction: TextInputAction.done,
-          ),
-          const SizedBox(height: AppSizes.xxl),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(AppSizes.lg),
@@ -237,18 +356,30 @@ class BasicInfoStepState extends State<BasicInfoStep> {
     );
   }
 
+  /// عنوان قسم يجمع الحقول المتقاربة بدل قائمة واحدة طويلة.
+  Widget _sectionHeader(IconData icon, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.md),
+      child: Row(
+        children: [
+          Icon(icon, size: AppSizes.iconMd, color: AppColors.primary),
+          const SizedBox(width: AppSizes.sm),
+          Text(
+            context.tr(title),
+            style: AppTextStyles.heading3.copyWith(color: AppColors.secondary),
+          ),
+          const SizedBox(width: AppSizes.md),
+          const Expanded(child: Divider()),
+        ],
+      ),
+    );
+  }
+
   // ── validators ────────────────────────────────────────────────────────────
 
   String? _nameValidator(String? v) {
     if (v == null || v.trim().isEmpty) return context.tr('fieldRequired');
     if (v.trim().length < 2) return context.tr('nameTooShort');
-    return null;
-  }
-
-  String? _emailValidator(String? v) {
-    if (v == null || v.trim().isEmpty) return context.tr('fieldRequired');
-    final emailRx = RegExp(r'^[\w._%+\-]+@[\w.\-]+\.[a-zA-Z]{2,}$');
-    if (!emailRx.hasMatch(v.trim())) return context.tr('invalidEmail');
     return null;
   }
 
@@ -258,21 +389,40 @@ class BasicInfoStepState extends State<BasicInfoStep> {
     if (!phoneRx.hasMatch(v.trim())) return context.tr('invalidPhone');
     return null;
   }
-
-  String? _passwordValidator(String? v) {
-    if (v == null || v.isEmpty) return context.tr('fieldRequired');
-    if (v.length < 8) return context.tr('passwordTooShort');
-    if (!RegExp(r'[a-zA-Z]').hasMatch(v) || !RegExp(r'\d').hasMatch(v)) {
-      return context.tr('passwordWeak');
-    }
-    return null;
-  }
 }
 
 // ── avatar picker ─────────────────────────────────────────────────────────────
 
-class _AvatarPicker extends StatelessWidget {
-  const _AvatarPicker();
+class _AvatarPicker extends StatefulWidget {
+  const _AvatarPicker({required this.data});
+
+  final RegistrationData data;
+
+  @override
+  State<_AvatarPicker> createState() => _AvatarPickerState();
+}
+
+class _AvatarPickerState extends State<_AvatarPicker> {
+  String? _path;
+
+  @override
+  void initState() {
+    super.initState();
+    _path = widget.data.avatarPath;
+  }
+
+  Future<void> _pick() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    setState(() {
+      _path = picked.path;
+      widget.data.avatarPath = picked.path;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -281,11 +431,14 @@ class _AvatarPicker extends StatelessWidget {
         Container(
           width: 96,
           height: 96,
+          clipBehavior: Clip.antiAlias,
           decoration: const BoxDecoration(
             color: Color(0xFFE5E7EB),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.person, size: 48, color: Color(0xFF9CA3AF)),
+          child: _path != null
+              ? Image.file(File(_path!), fit: BoxFit.cover)
+              : const Icon(Icons.person, size: 48, color: Color(0xFF9CA3AF)),
         ),
         PositionedDirectional(
           bottom: 0,
@@ -295,7 +448,7 @@ class _AvatarPicker extends StatelessWidget {
             shape: const CircleBorder(),
             elevation: 4,
             child: InkWell(
-              onTap: () {},
+              onTap: _pick,
               customBorder: const CircleBorder(),
               child: Padding(
                 padding: const EdgeInsets.all(AppSizes.sm),

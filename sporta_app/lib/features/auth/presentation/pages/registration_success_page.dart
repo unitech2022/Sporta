@@ -5,33 +5,53 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/state/app_scope.dart';
 import '../../../../core/state/app_settings.dart';
-import '../../domain/entities/registration_data.dart';
+import '../widgets/account_review_notice.dart';
+import '../../../../core/localization/tr_global.dart';
+import '../../../../core/utils/system_insets.dart';
 
 /// Shown after a successful registration with the chosen roles and
 /// suggested next steps.
+///
+/// حسابا المدرب وصاحب الملعب لا يُفعَّلان إلا بموافقة الأدمن، فتُعرض لهما رسالة
+/// «قيد المراجعة» بدل خطوات البدء. من سجّل كلاعب أيضاً يدخل التطبيق كلاعب.
 class RegistrationSuccessPage extends StatelessWidget {
   const RegistrationSuccessPage({
     super.key,
-    required this.data,
+    required this.roles,
     required this.onStart,
+    this.onBackToLogin,
   });
 
-  final RegistrationData data;
+  /// الأدوار المختارة عند التسجيل — الفعّالة والمعلّقة معاً.
+  final Set<UserRole> roles;
   final VoidCallback onStart;
 
-  static const _nextSteps = {
-    UserRole.player: 'أكمل معلومات اللاعب وحدد مستواك',
-    UserRole.coach: 'أضف شهاداتك وتخصصاتك التدريبية',
-    UserRole.venue: 'أضف تفاصيل ملعبك والمرافق المتوفرة',
+  /// يُستدعى حين لا يملك الحساب أي دور فعّال (مدرب/ملعب فقط) — لا شيء يدخله
+  /// التطبيق قبل الموافقة، فيعود لتسجيل الدخول.
+  final VoidCallback? onBackToLogin;
+
+  static Map<UserRole, String> get _nextSteps => {
+    UserRole.player: trg('أكمل معلومات اللاعب وحدد مستواك'),
+    UserRole.coach: trg('أضف شهاداتك وتخصصاتك التدريبية'),
+    UserRole.venue: trg('أضف تفاصيل ملعبك والمرافق المتوفرة'),
   };
+
+  /// أدوار تحتاج موافقة الأدمن قبل تفعيلها.
+  bool get _needsReview =>
+      roles.contains(UserRole.coach) || roles.contains(UserRole.venue);
+
+  /// هل يملك دوراً يعمل فوراً (اللاعب) إلى جانب الدور المعلّق؟
+  bool get _hasActiveRole => roles.contains(UserRole.player);
 
   @override
   Widget build(BuildContext context) {
+    if (_needsReview) return _buildUnderReview(context);
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding:
-              const EdgeInsets.symmetric(horizontal: AppSizes.pagePadding),
+          padding: context.safeBottom(
+              const EdgeInsets.symmetric(horizontal: AppSizes.pagePadding)),
           child: Column(
             children: [
               SizedBox(height: 64),
@@ -47,29 +67,92 @@ class RegistrationSuccessPage extends StatelessWidget {
               ),
               SizedBox(height: AppSizes.xxl),
               Text(
-                'مرحباً بك في SPORTA!',
+                context.tr('auth.registration_success_page.welcomeTitle'),
                 style: AppTextStyles.heading1
                     .copyWith(fontSize: 30, color: AppColors.secondary),
               ),
               SizedBox(height: AppSizes.md),
               Text(
-                'تم إنشاء حسابك بنجاح 🎉',
+                context.tr('auth.registration_success_page.accountCreated'),
                 style: AppTextStyles.body
                     .copyWith(color: AppColors.mutedForeground),
               ),
               const SizedBox(height: AppSizes.xxl),
-              if (data.roles.isNotEmpty) ...[
-                _RolesCard(roles: data.roles),
+              if (roles.isNotEmpty) ...[
+                _RolesCard(roles: roles),
                 const SizedBox(height: AppSizes.xxl),
               ],
-              _NextStepsCard(roles: data.roles),
+              _NextStepsCard(roles: roles),
               const SizedBox(height: AppSizes.xxl),
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
                   onPressed: onStart,
-                  child: const Text('ابدأ الآن'),
+                  child: Text(context.tr('auth.registration_success_page.startNow')),
+                ),
+              ),
+              const SizedBox(height: AppSizes.xxxl),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// شاشة «طلبك قيد المراجعة» لحسابات المدرب/الملعب.
+  Widget _buildUnderReview(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: context.safeBottom(
+              const EdgeInsets.symmetric(horizontal: AppSizes.pagePadding)),
+          child: Column(
+            children: [
+              const SizedBox(height: 64),
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.hourglass_top_rounded,
+                    size: 48, color: AppColors.primary),
+              ),
+              const SizedBox(height: AppSizes.xxl),
+              Text(
+                context.tr(accountReviewTitle),
+                textAlign: TextAlign.center,
+                style: AppTextStyles.heading1
+                    .copyWith(fontSize: 26, color: AppColors.secondary),
+              ),
+              const SizedBox(height: AppSizes.xl),
+              for (final paragraph in accountReviewParagraphs) ...[
+                Text(
+                  context.tr(paragraph),
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.body
+                      .copyWith(color: AppColors.mutedForeground),
+                ),
+                const SizedBox(height: AppSizes.lg),
+              ],
+              const SizedBox(height: AppSizes.md),
+              if (roles.isNotEmpty) ...[
+                _RolesCard(roles: roles),
+                const SizedBox(height: AppSizes.xxl),
+              ],
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  // من سجّل كلاعب أيضاً يدخل الآن بدور اللاعب؛ ومن سجّل كمدرب
+                  // أو ملعب فقط لا يملك ما يدخله قبل الموافقة.
+                  onPressed:
+                      _hasActiveRole ? onStart : (onBackToLogin ?? onStart),
+                  child: Text(context.tr(_hasActiveRole
+                      ? 'auth.registration_success_page.startNow'
+                      : context.tr('العودة لتسجيل الدخول'))),
                 ),
               ),
               const SizedBox(height: AppSizes.xxxl),
@@ -109,7 +192,7 @@ class _RolesCard extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'أدوارك في التطبيق',
+            context.tr('auth.registration_success_page.yourRoles'),
             style: AppTextStyles.heading3.copyWith(color: AppColors.secondary),
           ),
           SizedBox(height: AppSizes.lg),
@@ -145,7 +228,7 @@ class _RolesCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppSizes.radiusSm),
             ),
             child: Text(
-              '💡 يمكنك التبديل بين الأدوار في أي وقت من القائمة الرئيسية',
+              context.tr('auth.registration_success_page.switchRolesHint'),
               textAlign: TextAlign.center,
               style: AppTextStyles.caption,
             ),
@@ -166,7 +249,7 @@ class _NextStepsCard extends StatelessWidget {
     final steps = [
       for (final role in roles)
         RegistrationSuccessPage._nextSteps[role]!,
-      'استكشف الملاعب والمباريات القريبة منك',
+      context.tr('auth.registration_success_page.exploreNearby'),
     ];
 
     return Container(
@@ -180,7 +263,7 @@ class _NextStepsCard extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'الخطوات التالية',
+            context.tr('auth.registration_success_page.nextSteps'),
             style: AppTextStyles.heading3.copyWith(color: AppColors.secondary),
           ),
           SizedBox(height: AppSizes.md),

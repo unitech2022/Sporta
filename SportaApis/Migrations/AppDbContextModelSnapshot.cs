@@ -22,6 +22,57 @@ namespace SportaApis.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("SportaApis.Models.Ad", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Placements")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Subtitle")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("SubtitleEn")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Target")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TitleEn")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Ads");
+                });
+
             modelBuilder.Entity("SportaApis.Models.AmericanoMatch", b =>
                 {
                     b.Property<int>("Id")
@@ -36,10 +87,28 @@ namespace SportaApis.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime?>("DrawnAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("Format")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("IncompleteNoticeSentAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<bool>("IsTournament")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<int>("MatchId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MatchMinutes")
                         .HasColumnType("int");
 
                     b.Property<float>("MaxAllowedLevel")
@@ -47,6 +116,10 @@ namespace SportaApis.Migrations
 
                     b.Property<float>("MinAllowedLevel")
                         .HasColumnType("float");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)");
 
                     b.Property<int>("TotalRounds")
                         .HasColumnType("int");
@@ -78,6 +151,21 @@ namespace SportaApis.Migrations
 
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsDisputed")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("ProposedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("ProposedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProposedTeam1Score")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProposedTeam2Score")
+                        .HasColumnType("int");
 
                     b.Property<int>("RoundNumber")
                         .HasColumnType("int");
@@ -118,6 +206,127 @@ namespace SportaApis.Migrations
                     b.ToTable("AmericanoRounds");
                 });
 
+            modelBuilder.Entity("SportaApis.Models.AssessmentLevel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DescriptionAr")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("DescriptionEn")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("MinScore")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Sport")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AssessmentLevels");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.AssessmentOption", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TextAr")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TextEn")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("AssessmentOptions");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.AssessmentQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Sport")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TextAr")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TextEn")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AssessmentQuestions");
+                });
+
             modelBuilder.Entity("SportaApis.Models.Booking", b =>
                 {
                     b.Property<int>("Id")
@@ -141,8 +350,25 @@ namespace SportaApis.Migrations
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<decimal>("MemberDiscountAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("MemberDiscountMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MembershipId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("PaidFullAmount")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("ReviewPromptSentAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("SportaCommission")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime(6)");
@@ -169,6 +395,98 @@ namespace SportaApis.Migrations
                     b.ToTable("Bookings");
                 });
 
+            modelBuilder.Entity("SportaApis.Models.City", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CountryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<string>("Region")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CountryId");
+
+                    b.HasIndex("NameAr");
+
+                    b.ToTable("Cities");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.CoachOffer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CoachProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("DiscountPercent")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("TargetLabel")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachProfileId");
+
+                    b.ToTable("CoachOffers");
+                });
+
             modelBuilder.Entity("SportaApis.Models.CoachProfile", b =>
                 {
                     b.Property<int>("Id")
@@ -177,24 +495,61 @@ namespace SportaApis.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AvailableDays")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Bio")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Certifications")
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int>("ExperienceLevel")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("HourlyRate")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<string>("IdDocumentUrl")
+                        .HasColumnType("longtext");
+
                     b.Property<bool>("IsVerifiedOnPlatform")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("NameEn")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NationalIdBackUrl")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NationalIdFrontUrl")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal?>("PackagePrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int?>("PreferredVenueId")
+                        .HasColumnType("int");
 
                     b.Property<float>("Rating")
                         .HasColumnType("float");
 
+                    b.Property<int>("Residency")
+                        .HasColumnType("int");
+
                     b.Property<string>("Specialization")
                         .HasColumnType("longtext");
+
+                    b.Property<int?>("SportId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TargetGender")
+                        .HasColumnType("int");
 
                     b.Property<int>("TotalRatings")
                         .HasColumnType("int");
@@ -210,10 +565,29 @@ namespace SportaApis.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PreferredVenueId");
+
+                    b.HasIndex("SportId");
+
                     b.HasIndex("UserId")
                         .IsUnique();
 
                     b.ToTable("CoachProfiles");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.CoachProfileSpecialization", b =>
+                {
+                    b.Property<int>("CoachProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SpecializationId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CoachProfileId", "SpecializationId");
+
+                    b.HasIndex("SpecializationId");
+
+                    b.ToTable("CoachProfileSpecializations");
                 });
 
             modelBuilder.Entity("SportaApis.Models.CoachSession", b =>
@@ -224,8 +598,17 @@ namespace SportaApis.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal>("BasePrice")
+                        .HasColumnType("decimal(65,30)");
+
                     b.Property<int>("CoachProfileId")
                         .HasColumnType("int");
+
+                    b.Property<int?>("CoachRating")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CoachReview")
+                        .HasColumnType("longtext");
 
                     b.Property<int?>("CourtId")
                         .HasColumnType("int");
@@ -242,6 +625,12 @@ namespace SportaApis.Migrations
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<decimal>("OfferDiscountPercent")
+                        .HasColumnType("decimal(65,30)");
+
                     b.Property<int>("PlayerId")
                         .HasColumnType("int");
 
@@ -255,8 +644,18 @@ namespace SportaApis.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<DateTime?>("ReviewPromptSentAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime>("ScheduledAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("SportaCommissionPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<string>("TargetLevel")
                         .IsRequired()
@@ -280,7 +679,7 @@ namespace SportaApis.Migrations
                     b.ToTable("CoachSessions");
                 });
 
-            modelBuilder.Entity("SportaApis.Models.Court", b =>
+            modelBuilder.Entity("SportaApis.Models.CoachSpecialization", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -291,19 +690,136 @@ namespace SportaApis.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CoachSpecializations");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.Country", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("varchar(2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CurrencyCode")
+                        .HasMaxLength(3)
+                        .HasColumnType("varchar(3)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<string>("PhoneCode")
+                        .HasMaxLength(6)
+                        .HasColumnType("varchar(6)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Countries");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.Court", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourtCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("ImageUrl")
                         .HasColumnType("longtext");
 
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsSuspended")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double");
+
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NameEn")
                         .HasColumnType("longtext");
 
                     b.Property<decimal>("PricePerHour")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
+
+                    b.Property<double>("RatingAverage")
+                        .HasColumnType("double");
+
+                    b.Property<int>("RatingCount")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("SportaCommissionPercent")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)")
+                        .HasDefaultValue(5m);
 
                     b.Property<int>("Type")
                         .HasColumnType("int");
@@ -321,6 +837,502 @@ namespace SportaApis.Migrations
                     b.ToTable("Courts");
                 });
 
+            modelBuilder.Entity("SportaApis.Models.CourtBlockedSlot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourtId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Hour")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourtId");
+
+                    b.ToTable("CourtBlockedSlots");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.CourtFavorite", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourtId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourtId");
+
+                    b.HasIndex("UserId", "CourtId")
+                        .IsUnique();
+
+                    b.ToTable("CourtFavorites");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.CourtOpeningHour", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CloseHour")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CourtId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Day")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsClosed")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("OpenHour")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourtId", "Day")
+                        .IsUnique();
+
+                    b.ToTable("CourtOpeningHours");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.CourtPriceRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("AdjustmentPercent")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)");
+
+                    b.Property<int>("CourtId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("Day")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EndHour")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("HourlyPrice")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<int>("StartHour")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourtId");
+
+                    b.ToTable("CourtPriceRules");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.CourtPriceTier", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourtId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourtId", "Kind", "DurationMinutes")
+                        .IsUnique();
+
+                    b.ToTable("CourtPriceTiers");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.Discount", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DescriptionAr")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("EndsAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("GrantsLifetime")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsGeneral")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int?>("MaxBeneficiaries")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MaxUses")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<decimal>("Percent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<DateTime?>("StartsAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Target")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UsedCount")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Target", "IsActive");
+
+                    b.ToTable("Discounts");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.DiscountBeneficiary", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AutoEnrolled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("DiscountId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("DiscountId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("DiscountBeneficiaries");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.District", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CityId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CityId");
+
+                    b.ToTable("Districts");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.EventChatMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AttachmentName")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<long?>("AttachmentSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("AttachmentType")
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("AttachmentUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("MatchId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MentionedUserIds")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<int?>("ReplyToId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SenderName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<int?>("SenderUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MatchId", "Id");
+
+                    b.ToTable("EventChatMessages");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.EventChatReaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Emoji")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("varchar(16)");
+
+                    b.Property<int>("MessageId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MessageId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("EventChatReactions");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.EventChatReadState", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("LastReadMessageId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MatchId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MatchId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("EventChatReads");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.EventInvite", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReceiverId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TargetId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SenderId");
+
+                    b.HasIndex("ReceiverId", "Kind", "TargetId");
+
+                    b.ToTable("EventInvites");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.Follow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("FollowerId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FollowingId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FollowingId");
+
+                    b.HasIndex("FollowerId", "FollowingId")
+                        .IsUnique();
+
+                    b.ToTable("Follows");
+                });
+
             modelBuilder.Entity("SportaApis.Models.Friendship", b =>
                 {
                     b.Property<int>("Id")
@@ -332,11 +1344,17 @@ namespace SportaApis.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<bool>("ReceiverFavorite")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<int>("ReceiverId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("RespondedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("SenderFavorite")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<int>("SenderId")
                         .HasColumnType("int");
@@ -421,6 +1439,15 @@ namespace SportaApis.Migrations
                     b.Property<int>("DurationMinutes")
                         .HasColumnType("int");
 
+                    b.Property<int>("Gender")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDisputed")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsPrivate")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<int>("MatchType")
                         .HasColumnType("int");
 
@@ -436,14 +1463,45 @@ namespace SportaApis.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("longtext");
 
+                    b.Property<int>("PaymentMode")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("PricePerPlayer")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<DateTime?>("ProposedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("ProposedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProposedTeam1Score")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProposedTeam2Score")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("RatingPromptSentAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("ReminderSentAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime>("ScheduledAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<decimal>("SportaCommissionPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Team1Score")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Team2Score")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -472,13 +1530,32 @@ namespace SportaApis.Migrations
                     b.Property<bool>("HasPaid")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<int?>("InvitedById")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("JoinedAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("MatchId")
                         .HasColumnType("int");
 
+                    b.Property<int>("MemberDiscountMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MembershipId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("PaidAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
                     b.Property<int?>("PlayerProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Team")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -487,7 +1564,12 @@ namespace SportaApis.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("WithdrawalRequestedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("MembershipId");
 
                     b.HasIndex("PlayerProfileId");
 
@@ -535,6 +1617,174 @@ namespace SportaApis.Migrations
                         .IsUnique();
 
                     b.ToTable("MatchRatings");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.MatchWaitlistEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("MatchId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("OfferExpiresAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("OfferedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfferExpiresAt");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("MatchId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("MatchWaitlist");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.Membership", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AutoRenew")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("DiscountPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<bool>("IsEnded")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int?>("MonthlyDiscountHours")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("PeriodEnd")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("PeriodStart")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("PlanId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PlanName")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("PriorityDays")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("RenewalReminderSentAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VenueId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlanId");
+
+                    b.HasIndex("VenueId");
+
+                    b.HasIndex("IsEnded", "PeriodEnd");
+
+                    b.HasIndex("UserId", "VenueId");
+
+                    b.ToTable("Memberships");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.MembershipPlan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<decimal>("DiscountPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int?>("MonthlyDiscountHours")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("MonthlyPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)");
+
+                    b.Property<string>("NameEn")
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)");
+
+                    b.Property<int>("PriorityDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("VenueId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VenueId");
+
+                    b.ToTable("MembershipPlans");
                 });
 
             modelBuilder.Entity("SportaApis.Models.Notification", b =>
@@ -589,6 +1839,14 @@ namespace SportaApis.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(10)
@@ -608,12 +1866,148 @@ namespace SportaApis.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
 
+                    b.Property<int>("Purpose")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("TokenConsumed")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("TokenExpiresAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("VerificationToken")
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<DateTime?>("VerifiedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("VerificationToken");
+
+                    b.HasIndex("PhoneNumber", "Purpose", "CreatedAt");
+
                     b.ToTable("OtpCodes");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.Package", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("BookingDiscountPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("CommissionDiscountPercent")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal>("CommissionPercent")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("DurationDays")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FeaturesText")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Period")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PointsMultiplier")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("WelcomePoints")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("Packages");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.PlayerLevelDefinition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DescriptionAr")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("DescriptionEn")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TitleAr")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("TitleEn")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(3, 1)
+                        .HasColumnType("decimal(3,1)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Value")
+                        .IsUnique();
+
+                    b.ToTable("PlayerLevelDefinitions");
                 });
 
             modelBuilder.Entity("SportaApis.Models.PlayerProfile", b =>
@@ -623,6 +2017,9 @@ namespace SportaApis.Migrations
                         .HasColumnType("int");
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AssessmentLevelId")
+                        .HasColumnType("int");
 
                     b.Property<int>("CourtPosition")
                         .HasColumnType("int");
@@ -677,6 +2074,49 @@ namespace SportaApis.Migrations
                     b.ToTable("PlayerProfiles");
                 });
 
+            modelBuilder.Entity("SportaApis.Models.PointsTransaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ReferenceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Kind", "CreatedAt");
+
+                    b.HasIndex("UserId", "Type", "ReferenceId");
+
+                    b.ToTable("PointsTransactions");
+                });
+
             modelBuilder.Entity("SportaApis.Models.RefreshToken", b =>
                 {
                     b.Property<int>("Id")
@@ -715,7 +2155,102 @@ namespace SportaApis.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
-            modelBuilder.Entity("SportaApis.Models.Subscription", b =>
+            modelBuilder.Entity("SportaApis.Models.Review", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<int>("ContextId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ContextType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("RaterId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RaterRole")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Tags")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<int>("TargetId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TargetType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RaterId");
+
+                    b.HasIndex("TargetType", "TargetId", "CreatedAt");
+
+                    b.HasIndex("ContextType", "ContextId", "RaterId", "TargetType", "TargetId")
+                        .IsUnique();
+
+                    b.ToTable("Reviews");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.ServiceZone", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("PolygonJson")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ServiceZones");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.Sport", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -726,20 +2261,136 @@ namespace SportaApis.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime(6)");
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext");
 
-                    b.Property<int>("Plan")
+                    b.Property<int>("DurationMinutes")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("datetime(6)");
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("longtext");
 
-                    b.Property<DateTime?>("TrialEndDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<bool>("TrialUsed")
+                    b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("PlayersPerMatch")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("Sports");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.SportSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ItemsText")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SportId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SportId");
+
+                    b.ToTable("SportSettings");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.StaffPermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Permission")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)");
+
+                    b.Property<int>("StaffProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StaffProfileId", "Permission")
+                        .IsUnique();
+
+                    b.ToTable("StaffPermissions");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.StaffProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CityId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CountryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("JobTitle")
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
@@ -749,10 +2400,453 @@ namespace SportaApis.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CityId");
+
+                    b.HasIndex("CountryId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("StaffProfiles");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.Subscription", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("BookingDiscountPercent")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal>("CommissionDiscountPercent")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal>("CommissionPercent")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("PackageId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PackageName")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Period")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Plan")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PointsMultiplier")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal>("PricePaid")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WelcomePoints")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PackageId");
+
                     b.HasIndex("UserId")
                         .IsUnique();
 
                     b.ToTable("Subscriptions");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.SupportConversation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("LastMessageAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("LastMessageFromAdmin")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("LastMessageText")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UnreadForAdmin")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UnreadForUser")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LastMessageAt");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("SupportConversations");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.SupportMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("varchar(4000)");
+
+                    b.Property<int>("ConversationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("FromAdmin")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("SenderName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<int>("SenderUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId", "Id");
+
+                    b.ToTable("SupportMessages");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.SystemSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsSensitive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ValueAr")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ValueEn")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SystemSettings");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.Tournament", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PrizeAmount")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PrizeLabel")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Scope")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Tournaments");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.TournamentCourt", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AmericanoMatchId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CourtId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourtId");
+
+                    b.HasIndex("AmericanoMatchId", "CourtId")
+                        .IsUnique();
+
+                    b.ToTable("TournamentCourts");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.TournamentFixture", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AmericanoMatchId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CourtId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("GroupIndex")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Index")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsBye")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsDisputed")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("ProposedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("ProposedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProposedTeam1Score")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProposedTeam2Score")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Round")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ScheduledAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Stage")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Team1")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Team1Score")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Team2")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Team2Score")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("WinnerTeam")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourtId");
+
+                    b.HasIndex("AmericanoMatchId", "Stage", "Round", "Index");
+
+                    b.ToTable("TournamentFixtures");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.TournamentTeamName", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AmericanoMatchId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<int>("Team")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AmericanoMatchId", "Team")
+                        .IsUnique();
+
+                    b.ToTable("TournamentTeamNames");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.TrustedDevice", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DeviceId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Platform")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("SecretHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("TrustedDevices");
                 });
 
             modelBuilder.Entity("SportaApis.Models.User", b =>
@@ -763,7 +2857,21 @@ namespace SportaApis.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AccountHolderName")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("BankName")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<string>("City")
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("CityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CommercialRegistrationImageUrl")
                         .HasColumnType("longtext");
 
                     b.Property<string>("Country")
@@ -772,11 +2880,16 @@ namespace SportaApis.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("District")
                         .HasColumnType("longtext");
 
+                    b.Property<int?>("DistrictId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
@@ -791,13 +2904,32 @@ namespace SportaApis.Migrations
                     b.Property<int?>("Gender")
                         .HasColumnType("int");
 
+                    b.Property<string>("Iban")
+                        .HasMaxLength(34)
+                        .HasColumnType("varchar(34)");
+
+                    b.Property<string>("IdImageUrl")
+                        .HasColumnType("longtext");
+
                     b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double");
+
+                    b.Property<int>("LevelPoints")
+                        .HasColumnType("int");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -807,10 +2939,16 @@ namespace SportaApis.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
+                    b.Property<int>("PointsBalance")
+                        .HasColumnType("int");
+
                     b.Property<int>("PreferredLanguage")
                         .HasColumnType("int");
 
                     b.Property<string>("ProfileImageUrl")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TaxCertificateImageUrl")
                         .HasColumnType("longtext");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -821,8 +2959,14 @@ namespace SportaApis.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CityId");
+
+                    b.HasIndex("DistrictId");
+
                     b.HasIndex("Email")
                         .IsUnique();
+
+                    b.HasIndex("Iban");
 
                     b.HasIndex("PhoneNumber")
                         .IsUnique();
@@ -838,8 +2982,22 @@ namespace SportaApis.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsApproved")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<int>("Role")
                         .HasColumnType("int");
@@ -870,19 +3028,40 @@ namespace SportaApis.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<int?>("BookingWindowDays")
+                        .HasColumnType("int");
+
                     b.Property<string>("City")
                         .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("CityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CommercialRegistrationImageUrl")
                         .HasColumnType("longtext");
 
                     b.Property<string>("Country")
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<int?>("CountryId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Description")
                         .HasColumnType("longtext");
+
+                    b.Property<string>("District")
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("DistrictId")
+                        .HasColumnType("int");
 
                     b.Property<int>("GenderPolicy")
                         .HasColumnType("int");
@@ -891,6 +3070,12 @@ namespace SportaApis.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<double?>("Latitude")
@@ -903,17 +3088,157 @@ namespace SportaApis.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("NameEn")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NationalAddressImageUrl")
+                        .HasColumnType("longtext");
+
                     b.Property<int>("OwnerId")
                         .HasColumnType("int");
+
+                    b.Property<string>("OwnerIdImageUrl")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TaxCertificateUrl")
+                        .HasColumnType("longtext");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CityId");
+
+                    b.HasIndex("CountryId");
+
+                    b.HasIndex("DistrictId");
+
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Venues");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.VenueImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("VenueId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VenueId");
+
+                    b.ToTable("VenueImages");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.VenueSubscription", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("BasePrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("CourtCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("DiscountPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<DateTime>("EndsAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsYearly")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("OwnerId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PaidAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime>("StartsAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId", "EndsAt");
+
+                    b.ToTable("VenueSubscriptions");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.VenueSubscriptionPricing", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<decimal>("MonthlyExtraCourt")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("MonthlyOneCourt")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("MonthlyTwoCourts")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("YearlyExtraCourt")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("YearlyOneCourt")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("YearlyTwoCourts")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("VenueSubscriptionPricings");
                 });
 
             modelBuilder.Entity("SportaApis.Models.Wallet", b =>
@@ -963,7 +3288,14 @@ namespace SportaApis.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("longtext");
 
+                    b.Property<string>("PaymentReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<int?>("ReferenceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<int>("Type")
@@ -977,9 +3309,60 @@ namespace SportaApis.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PaymentReference")
+                        .IsUnique();
+
                     b.HasIndex("WalletId");
 
                     b.ToTable("WalletTransactions");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.WithdrawalRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccountHolderName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("AdminNotes")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("BankName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Iban")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("WithdrawalRequests");
                 });
 
             modelBuilder.Entity("SportaApis.Models.AmericanoMatch", b =>
@@ -1036,6 +3419,17 @@ namespace SportaApis.Migrations
                     b.Navigation("Team2Player2");
                 });
 
+            modelBuilder.Entity("SportaApis.Models.AssessmentOption", b =>
+                {
+                    b.HasOne("SportaApis.Models.AssessmentQuestion", "Question")
+                        .WithMany("Options")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
             modelBuilder.Entity("SportaApis.Models.Booking", b =>
                 {
                     b.HasOne("SportaApis.Models.Court", "Court")
@@ -1055,15 +3449,70 @@ namespace SportaApis.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SportaApis.Models.City", b =>
+                {
+                    b.HasOne("SportaApis.Models.Country", "Country")
+                        .WithMany("Cities")
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Country");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.CoachOffer", b =>
+                {
+                    b.HasOne("SportaApis.Models.CoachProfile", "CoachProfile")
+                        .WithMany("Offers")
+                        .HasForeignKey("CoachProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CoachProfile");
+                });
+
             modelBuilder.Entity("SportaApis.Models.CoachProfile", b =>
                 {
+                    b.HasOne("SportaApis.Models.Venue", "PreferredVenue")
+                        .WithMany()
+                        .HasForeignKey("PreferredVenueId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SportaApis.Models.Sport", "Sport")
+                        .WithMany()
+                        .HasForeignKey("SportId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("SportaApis.Models.User", "User")
                         .WithOne("CoachProfile")
                         .HasForeignKey("SportaApis.Models.CoachProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("PreferredVenue");
+
+                    b.Navigation("Sport");
+
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.CoachProfileSpecialization", b =>
+                {
+                    b.HasOne("SportaApis.Models.CoachProfile", "CoachProfile")
+                        .WithMany("Specializations")
+                        .HasForeignKey("CoachProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SportaApis.Models.CoachSpecialization", "Specialization")
+                        .WithMany("CoachProfiles")
+                        .HasForeignKey("SpecializationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CoachProfile");
+
+                    b.Navigation("Specialization");
                 });
 
             modelBuilder.Entity("SportaApis.Models.CoachSession", b =>
@@ -1100,6 +3549,159 @@ namespace SportaApis.Migrations
                         .IsRequired();
 
                     b.Navigation("Venue");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.CourtBlockedSlot", b =>
+                {
+                    b.HasOne("SportaApis.Models.Court", "Court")
+                        .WithMany()
+                        .HasForeignKey("CourtId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Court");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.CourtFavorite", b =>
+                {
+                    b.HasOne("SportaApis.Models.Court", "Court")
+                        .WithMany()
+                        .HasForeignKey("CourtId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SportaApis.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Court");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.CourtOpeningHour", b =>
+                {
+                    b.HasOne("SportaApis.Models.Court", "Court")
+                        .WithMany("OpeningHours")
+                        .HasForeignKey("CourtId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Court");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.CourtPriceRule", b =>
+                {
+                    b.HasOne("SportaApis.Models.Court", "Court")
+                        .WithMany("PriceRules")
+                        .HasForeignKey("CourtId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Court");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.CourtPriceTier", b =>
+                {
+                    b.HasOne("SportaApis.Models.Court", "Court")
+                        .WithMany("PriceTiers")
+                        .HasForeignKey("CourtId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Court");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.DiscountBeneficiary", b =>
+                {
+                    b.HasOne("SportaApis.Models.Discount", "Discount")
+                        .WithMany("Beneficiaries")
+                        .HasForeignKey("DiscountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SportaApis.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Discount");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.District", b =>
+                {
+                    b.HasOne("SportaApis.Models.City", "City")
+                        .WithMany("Districts")
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("City");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.EventChatMessage", b =>
+                {
+                    b.HasOne("SportaApis.Models.Match", "Match")
+                        .WithMany()
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Match");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.EventChatReaction", b =>
+                {
+                    b.HasOne("SportaApis.Models.EventChatMessage", "Message")
+                        .WithMany("Reactions")
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.EventInvite", b =>
+                {
+                    b.HasOne("SportaApis.Models.User", "Receiver")
+                        .WithMany()
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SportaApis.Models.User", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.Follow", b =>
+                {
+                    b.HasOne("SportaApis.Models.User", "Follower")
+                        .WithMany()
+                        .HasForeignKey("FollowerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SportaApis.Models.User", "Following")
+                        .WithMany()
+                        .HasForeignKey("FollowingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Follower");
+
+                    b.Navigation("Following");
                 });
 
             modelBuilder.Entity("SportaApis.Models.Friendship", b =>
@@ -1207,6 +3809,63 @@ namespace SportaApis.Migrations
                     b.Navigation("Rater");
                 });
 
+            modelBuilder.Entity("SportaApis.Models.MatchWaitlistEntry", b =>
+                {
+                    b.HasOne("SportaApis.Models.Match", "Match")
+                        .WithMany()
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SportaApis.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Match");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.Membership", b =>
+                {
+                    b.HasOne("SportaApis.Models.MembershipPlan", "Plan")
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SportaApis.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SportaApis.Models.Venue", "Venue")
+                        .WithMany()
+                        .HasForeignKey("VenueId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Plan");
+
+                    b.Navigation("User");
+
+                    b.Navigation("Venue");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.MembershipPlan", b =>
+                {
+                    b.HasOne("SportaApis.Models.Venue", "Venue")
+                        .WithMany()
+                        .HasForeignKey("VenueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Venue");
+                });
+
             modelBuilder.Entity("SportaApis.Models.Notification", b =>
                 {
                     b.HasOne("SportaApis.Models.User", "User")
@@ -1229,6 +3888,17 @@ namespace SportaApis.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SportaApis.Models.PointsTransaction", b =>
+                {
+                    b.HasOne("SportaApis.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SportaApis.Models.RefreshToken", b =>
                 {
                     b.HasOne("SportaApis.Models.User", "User")
@@ -1240,15 +3910,179 @@ namespace SportaApis.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SportaApis.Models.Review", b =>
+                {
+                    b.HasOne("SportaApis.Models.User", "Rater")
+                        .WithMany()
+                        .HasForeignKey("RaterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Rater");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.SportSetting", b =>
+                {
+                    b.HasOne("SportaApis.Models.Sport", "Sport")
+                        .WithMany("Settings")
+                        .HasForeignKey("SportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Sport");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.StaffPermission", b =>
+                {
+                    b.HasOne("SportaApis.Models.StaffProfile", "StaffProfile")
+                        .WithMany("Permissions")
+                        .HasForeignKey("StaffProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("StaffProfile");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.StaffProfile", b =>
+                {
+                    b.HasOne("SportaApis.Models.City", "City")
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SportaApis.Models.Country", "Country")
+                        .WithMany()
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SportaApis.Models.User", "User")
+                        .WithOne("StaffProfile")
+                        .HasForeignKey("SportaApis.Models.StaffProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("City");
+
+                    b.Navigation("Country");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SportaApis.Models.Subscription", b =>
                 {
+                    b.HasOne("SportaApis.Models.Package", "Package")
+                        .WithMany("Subscriptions")
+                        .HasForeignKey("PackageId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("SportaApis.Models.User", "User")
                         .WithOne("Subscription")
                         .HasForeignKey("SportaApis.Models.Subscription", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Package");
+
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.SupportConversation", b =>
+                {
+                    b.HasOne("SportaApis.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.SupportMessage", b =>
+                {
+                    b.HasOne("SportaApis.Models.SupportConversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.TournamentCourt", b =>
+                {
+                    b.HasOne("SportaApis.Models.AmericanoMatch", "AmericanoMatch")
+                        .WithMany("Courts")
+                        .HasForeignKey("AmericanoMatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SportaApis.Models.Court", "Court")
+                        .WithMany()
+                        .HasForeignKey("CourtId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AmericanoMatch");
+
+                    b.Navigation("Court");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.TournamentFixture", b =>
+                {
+                    b.HasOne("SportaApis.Models.AmericanoMatch", "AmericanoMatch")
+                        .WithMany("Fixtures")
+                        .HasForeignKey("AmericanoMatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SportaApis.Models.Court", "Court")
+                        .WithMany()
+                        .HasForeignKey("CourtId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AmericanoMatch");
+
+                    b.Navigation("Court");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.TournamentTeamName", b =>
+                {
+                    b.HasOne("SportaApis.Models.AmericanoMatch", "AmericanoMatch")
+                        .WithMany("TeamNames")
+                        .HasForeignKey("AmericanoMatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AmericanoMatch");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.TrustedDevice", b =>
+                {
+                    b.HasOne("SportaApis.Models.User", "User")
+                        .WithMany("TrustedDevices")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.User", b =>
+                {
+                    b.HasOne("SportaApis.Models.City", "CityRef")
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SportaApis.Models.District", "DistrictRef")
+                        .WithMany()
+                        .HasForeignKey("DistrictId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CityRef");
+
+                    b.Navigation("DistrictRef");
                 });
 
             modelBuilder.Entity("SportaApis.Models.UserRole", b =>
@@ -1264,10 +4098,53 @@ namespace SportaApis.Migrations
 
             modelBuilder.Entity("SportaApis.Models.Venue", b =>
                 {
+                    b.HasOne("SportaApis.Models.City", "CityRef")
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SportaApis.Models.Country", "CountryRef")
+                        .WithMany()
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SportaApis.Models.District", "DistrictRef")
+                        .WithMany()
+                        .HasForeignKey("DistrictId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("SportaApis.Models.User", "Owner")
                         .WithMany()
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CityRef");
+
+                    b.Navigation("CountryRef");
+
+                    b.Navigation("DistrictRef");
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.VenueImage", b =>
+                {
+                    b.HasOne("SportaApis.Models.Venue", "Venue")
+                        .WithMany("Images")
+                        .HasForeignKey("VenueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Venue");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.VenueSubscription", b =>
+                {
+                    b.HasOne("SportaApis.Models.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Owner");
@@ -1295,14 +4172,55 @@ namespace SportaApis.Migrations
                     b.Navigation("Wallet");
                 });
 
+            modelBuilder.Entity("SportaApis.Models.WithdrawalRequest", b =>
+                {
+                    b.HasOne("SportaApis.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SportaApis.Models.AmericanoMatch", b =>
                 {
+                    b.Navigation("Courts");
+
+                    b.Navigation("Fixtures");
+
                     b.Navigation("Rounds");
+
+                    b.Navigation("TeamNames");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.AssessmentQuestion", b =>
+                {
+                    b.Navigation("Options");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.City", b =>
+                {
+                    b.Navigation("Districts");
                 });
 
             modelBuilder.Entity("SportaApis.Models.CoachProfile", b =>
                 {
+                    b.Navigation("Offers");
+
                     b.Navigation("Sessions");
+
+                    b.Navigation("Specializations");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.CoachSpecialization", b =>
+                {
+                    b.Navigation("CoachProfiles");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.Country", b =>
+                {
+                    b.Navigation("Cities");
                 });
 
             modelBuilder.Entity("SportaApis.Models.Court", b =>
@@ -1310,6 +4228,22 @@ namespace SportaApis.Migrations
                     b.Navigation("Bookings");
 
                     b.Navigation("Matches");
+
+                    b.Navigation("OpeningHours");
+
+                    b.Navigation("PriceRules");
+
+                    b.Navigation("PriceTiers");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.Discount", b =>
+                {
+                    b.Navigation("Beneficiaries");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.EventChatMessage", b =>
+                {
+                    b.Navigation("Reactions");
                 });
 
             modelBuilder.Entity("SportaApis.Models.Match", b =>
@@ -1321,11 +4255,31 @@ namespace SportaApis.Migrations
                     b.Navigation("Ratings");
                 });
 
+            modelBuilder.Entity("SportaApis.Models.Package", b =>
+                {
+                    b.Navigation("Subscriptions");
+                });
+
             modelBuilder.Entity("SportaApis.Models.PlayerProfile", b =>
                 {
                     b.Navigation("LevelAssessments");
 
                     b.Navigation("MatchPlayers");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.Sport", b =>
+                {
+                    b.Navigation("Settings");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.StaffProfile", b =>
+                {
+                    b.Navigation("Permissions");
+                });
+
+            modelBuilder.Entity("SportaApis.Models.SupportConversation", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("SportaApis.Models.User", b =>
@@ -1344,7 +4298,11 @@ namespace SportaApis.Migrations
 
                     b.Navigation("SentFriendRequests");
 
+                    b.Navigation("StaffProfile");
+
                     b.Navigation("Subscription");
+
+                    b.Navigation("TrustedDevices");
 
                     b.Navigation("Wallet");
                 });
@@ -1352,6 +4310,8 @@ namespace SportaApis.Migrations
             modelBuilder.Entity("SportaApis.Models.Venue", b =>
                 {
                     b.Navigation("Courts");
+
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("SportaApis.Models.Wallet", b =>

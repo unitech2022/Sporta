@@ -1,9 +1,18 @@
+import 'package:sporta_app/core/state/app_scope.dart';
+import 'package:sporta_app/core/widgets/directional_icon.dart';
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/phone_input.dart';
+import '../../../auth/presentation/state/auth_scope.dart';
+import '../../../profile/presentation/pages/edit_profile_page.dart';
+import 'delete_account_page.dart';
+import '../../../venue/presentation/pages/location_picker_page.dart';
+import '../../../../core/localization/tr_global.dart';
+import '../../../../core/utils/system_insets.dart';
 
 class AccountSettingsPage extends StatefulWidget {
   const AccountSettingsPage({super.key, required this.onBack});
@@ -15,8 +24,6 @@ class AccountSettingsPage extends StatefulWidget {
 
 class _AccountSettingsPageState extends State<AccountSettingsPage> {
   bool _showPhoneModal = false;
-  bool _showEmailModal = false;
-  bool _showPasswordModal = false;
 
   @override
   void didUpdateWidget(AccountSettingsPage oldWidget) {
@@ -24,49 +31,63 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     if (_showPhoneModal) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _openPhoneDialog());
     }
-    if (_showEmailModal) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _openEmailDialog());
-    }
-    if (_showPasswordModal) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _openPasswordDialog());
-    }
   }
 
   void _openPhoneDialog() {
     setState(() => _showPhoneModal = false);
     showDialog(
       context: context,
-      builder: (ctx) => _PhoneModal(
-        onClose: () => Navigator.of(ctx).pop(),
+      builder: (ctx) => _PhoneModal(onClose: () => Navigator.of(ctx).pop()),
+    );
+  }
+
+  void _openEditProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            EditProfilePage(onBack: () => Navigator.of(context).pop()),
       ),
     );
   }
 
-  void _openEmailDialog() {
-    setState(() => _showEmailModal = false);
-    showDialog(
-      context: context,
-      builder: (ctx) => _EmailModal(
-        onClose: () => Navigator.of(ctx).pop(),
+  void _openDeleteAccount() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            DeleteAccountPage(onBack: () => Navigator.of(context).pop()),
       ),
     );
   }
 
-  void _openPasswordDialog() {
-    setState(() => _showPasswordModal = false);
-    showDialog(
-      context: context,
-      builder: (ctx) => _PasswordModal(
-        onClose: () => Navigator.of(ctx).pop(),
+  Future<void> _openLocation() async {
+    final user = context.auth.user;
+    final initial = (user?.latitude != null && user?.longitude != null)
+        ? LatLng(user!.latitude!, user.longitude!)
+        : null;
+    final picked = await Navigator.of(context).push<PickedLocation>(
+      MaterialPageRoute(
+        builder: (_) => LocationPickerPage(
+          initial: initial,
+          title: context.tr('حدد موقعي على الخريطة'),
+        ),
       ),
+    );
+    if (picked == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final error = await context.auth.updateLocation(
+      picked.latLng.latitude,
+      picked.latLng.longitude,
+    );
+    if (!mounted) return;
+    messenger.showSnackBar(
+      SnackBar(content: Text(error ?? context.tr('تم تحديث الموقع'))),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: ColoredBox(
         color: AppColors.background,
         child: Column(
@@ -74,13 +95,17 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             _buildHeader(),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(AppSizes.pagePadding),
+                padding: context.safeBottom(
+                  const EdgeInsets.all(AppSizes.pagePadding),
+                ),
                 children: [
                   _buildInfoCard(),
                   const SizedBox(height: AppSizes.lg),
                   _buildCurrentInfoCard(),
                   const SizedBox(height: AppSizes.lg),
                   _buildActionsCard(),
+                  const SizedBox(height: AppSizes.lg),
+                  _buildDangerZone(),
                   const SizedBox(height: AppSizes.lg),
                   _buildSecurityNote(),
                   const SizedBox(height: AppSizes.xl),
@@ -121,17 +146,21 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                   customBorder: const CircleBorder(),
                   child: const Padding(
                     padding: EdgeInsets.all(AppSizes.sm),
-                    child: Icon(Icons.chevron_right,
-                        size: AppSizes.iconMd, color: Colors.white),
+                    child: DirectionalIcon(
+                      rtl: Icons.chevron_right,
+                      ltr: Icons.chevron_left,
+                      size: AppSizes.iconMd,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'إعدادات الحساب',
+                  context.tr('إعدادات الحساب'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
@@ -162,15 +191,18 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
               color: AppColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(AppSizes.radiusLg),
             ),
-            child: const Icon(Icons.info_outline,
-                size: AppSizes.iconSm, color: AppColors.primary),
+            child: const Icon(
+              Icons.info_outline,
+              size: AppSizes.iconSm,
+              color: AppColors.primary,
+            ),
           ),
           const SizedBox(width: AppSizes.md),
-          const Expanded(
+          Expanded(
             child: Text(
-              'إدارة معلومات حسابك وكلمة المرور',
+              context.tr('إدارة معلومات حسابك'),
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 color: AppColors.primary,
                 height: 1.5,
               ),
@@ -188,10 +220,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         borderRadius: BorderRadius.circular(AppSizes.radiusXl),
         border: Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
         ],
       ),
       child: Padding(
@@ -200,25 +229,31 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'المعلومات الحالية',
+              context.tr('المعلومات الحالية'),
               style: AppTextStyles.body.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.secondary,
               ),
             ),
             const SizedBox(height: AppSizes.lg),
-            _infoRow(Icons.phone_outlined, 'رقم الجوال', '+966 50 123 4567',
-                isLtr: true),
-            const Divider(height: AppSizes.xl),
-            _infoRow(Icons.email_outlined, 'البريد الإلكتروني', 'ahmad@email.com'),
+            _infoRow(
+              Icons.phone_outlined,
+              trg('رقم الجوال'),
+              context.auth.user?.phone ?? '—',
+              isLtr: true,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _infoRow(IconData icon, String label, String value,
-      {bool isLtr = false}) {
+  Widget _infoRow(
+    IconData icon,
+    String label,
+    String value, {
+    bool isLtr = false,
+  }) {
     return Row(
       children: [
         Container(
@@ -235,16 +270,21 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label,
-                  style: AppTextStyles.caption.copyWith(
-                      color: AppColors.mutedForeground)),
+              Text(
+                label,
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.mutedForeground,
+                ),
+              ),
               Directionality(
-                textDirection:
-                    isLtr ? TextDirection.ltr : TextDirection.rtl,
-                child: Text(value,
-                    style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.secondary,
-                        fontWeight: FontWeight.w500)),
+                textDirection: isLtr ? TextDirection.ltr : TextDirection.rtl,
+                child: Text(
+                  value,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.secondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
             ],
           ),
@@ -260,40 +300,37 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         borderRadius: BorderRadius.circular(AppSizes.radiusXl),
         border: Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
         ],
       ),
       child: Column(
         children: [
           _actionRow(
-            iconBg: const Color(0xFFDBEAFE),
-            iconColor: const Color(0xFF2563EB),
-            icon: Icons.phone_outlined,
-            title: 'تغيير رقم الجوال',
-            subtitle: 'يتطلب موافقة الإدارة',
-            onTap: _openPhoneDialog,
+            iconBg: const Color(0xFFEFF6FF),
+            iconColor: AppColors.primary,
+            icon: Icons.person_outline,
+            title: context.tr('تعديل المعلومات الشخصية'),
+            subtitle: context.tr('الاسم والمدينة والحي'),
+            onTap: _openEditProfile,
             isFirst: true,
           ),
           const Divider(height: 1, indent: AppSizes.lg),
           _actionRow(
-            iconBg: const Color(0xFFF0FDF4),
-            iconColor: const Color(0xFF16A34A),
-            icon: Icons.email_outlined,
-            title: 'تغيير البريد الإلكتروني',
-            subtitle: 'تحديث فوري',
-            onTap: _openEmailDialog,
+            iconBg: const Color(0xFFEFF6FF),
+            iconColor: AppColors.primary,
+            icon: Icons.map_outlined,
+            title: context.tr('موقعي'),
+            subtitle: context.tr('لعرض الأقرب من المباريات والملاعب'),
+            onTap: _openLocation,
           ),
           const Divider(height: 1, indent: AppSizes.lg),
           _actionRow(
-            iconBg: const Color(0xFFFFF7ED),
-            iconColor: const Color(0xFFEA580C),
-            icon: Icons.lock_outline,
-            title: 'تغيير كلمة المرور',
-            subtitle: 'آخر تغيير: منذ 3 أشهر',
-            onTap: _openPasswordDialog,
+            iconBg: const Color(0xFFDBEAFE),
+            iconColor: const Color(0xFF2563EB),
+            icon: Icons.phone_outlined,
+            title: context.tr('تغيير رقم الجوال'),
+            subtitle: context.tr('يتطلب موافقة الإدارة'),
+            onTap: _openPhoneDialog,
             isLast: true,
           ),
         ],
@@ -310,13 +347,13 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     required VoidCallback onTap,
     bool isFirst = false,
     bool isLast = false,
+    Color? titleColor,
   }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.vertical(
         top: isFirst ? const Radius.circular(AppSizes.radiusXl) : Radius.zero,
-        bottom:
-            isLast ? const Radius.circular(AppSizes.radiusXl) : Radius.zero,
+        bottom: isLast ? const Radius.circular(AppSizes.radiusXl) : Radius.zero,
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSizes.lg),
@@ -336,18 +373,48 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.secondary,
-                          fontWeight: FontWeight.w500)),
+                  Text(
+                    title,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: titleColor ?? AppColors.secondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   Text(subtitle, style: AppTextStyles.caption),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_left,
-                size: AppSizes.iconMd, color: AppColors.mutedForeground),
+            DirectionalIcon(
+              rtl: Icons.chevron_left,
+              ltr: Icons.chevron_right,
+              size: AppSizes.iconMd,
+              color: AppColors.mutedForeground,
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// حذف الحساب — مسار إلزامي داخل التطبيق (App Store 5.1.1(v))، معزول في
+  /// بطاقة حمراء أسفل الإجراءات حتى لا يُلمس بالخطأ.
+  Widget _buildDangerZone() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppSizes.radiusXl),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: _actionRow(
+        iconBg: const Color(0xFFFEF2F2),
+        iconColor: const Color(0xFFDC2626),
+        icon: Icons.delete_forever_outlined,
+        title: context.tr('حذف الحساب'),
+        subtitle: context.tr('حذف نهائي لحسابك وبياناتك'),
+        onTap: _openDeleteAccount,
+        isFirst: true,
+        isLast: true,
+        titleColor: const Color(0xFFDC2626),
       ),
     );
   }
@@ -363,14 +430,21 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.shield_outlined,
-              size: AppSizes.iconMd, color: Color(0xFFD97706)),
+          const Icon(
+            Icons.shield_outlined,
+            size: AppSizes.iconMd,
+            color: Color(0xFFD97706),
+          ),
           SizedBox(width: AppSizes.sm),
           Expanded(
             child: Text(
-              'تأكد من أن معلوماتك محدّثة لضمان أمان حسابك والتواصل معك بكفاءة.',
+              context.tr(
+                'تأكد من أن معلوماتك محدّثة لضمان أمان حسابك والتواصل معك بكفاءة.',
+              ),
               style: AppTextStyles.bodySmall.copyWith(
-                  color: const Color(0xFF92400E), height: 1.6),
+                color: const Color(0xFF92400E),
+                height: 1.6,
+              ),
             ),
           ),
         ],
@@ -411,9 +485,10 @@ class _PhoneModalState extends State<_PhoneModal> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusXl + 4)),
+        borderRadius: BorderRadius.circular(AppSizes.radiusXl + 4),
+      ),
       child: Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: Directionality.of(context),
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.xl),
           child: Column(
@@ -430,13 +505,19 @@ class _PhoneModalState extends State<_PhoneModal> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.phone_outlined,
-                        color: Colors.white, size: AppSizes.iconMd),
+                    const Icon(
+                      Icons.phone_outlined,
+                      color: Colors.white,
+                      size: AppSizes.iconMd,
+                    ),
                     SizedBox(width: AppSizes.sm),
-                    Text('تغيير رقم الجوال',
-                        style: AppTextStyles.body.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600)),
+                    Text(
+                      context.tr('تغيير رقم الجوال'),
+                      style: AppTextStyles.body.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -449,20 +530,29 @@ class _PhoneModalState extends State<_PhoneModal> {
                       height: 64,
                       decoration: BoxDecoration(
                         color: const Color(0xFFF0FDF4),
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.radiusFull),
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusFull,
+                        ),
                       ),
-                      child: const Icon(Icons.check_circle_outline,
-                          color: Color(0xFF16A34A), size: 36),
+                      child: const Icon(
+                        Icons.check_circle_outline,
+                        color: Color(0xFF16A34A),
+                        size: 36,
+                      ),
                     ),
                     SizedBox(height: AppSizes.md),
-                    Text('تم إرسال طلبك بنجاح!',
-                        style: AppTextStyles.body.copyWith(
-                            color: const Color(0xFF16A34A),
-                            fontWeight: FontWeight.w600)),
+                    Text(
+                      context.tr('تم إرسال طلبك بنجاح!'),
+                      style: AppTextStyles.body.copyWith(
+                        color: const Color(0xFF16A34A),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     SizedBox(height: AppSizes.sm),
-                    Text('سيتم مراجعة طلبك من قِبل الإدارة.',
-                        style: AppTextStyles.caption),
+                    Text(
+                      context.tr('سيتم مراجعة طلبك من قِبل الإدارة.'),
+                      style: AppTextStyles.caption,
+                    ),
                     const SizedBox(height: AppSizes.lg),
                   ],
                 )
@@ -477,14 +567,20 @@ class _PhoneModalState extends State<_PhoneModal> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.warning_amber_rounded,
-                          size: AppSizes.iconSm, color: Color(0xFFEA580C)),
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        size: AppSizes.iconSm,
+                        color: Color(0xFFEA580C),
+                      ),
                       SizedBox(width: AppSizes.sm),
                       Expanded(
                         child: Text(
-                          'تغيير رقم الجوال يتطلب موافقة الإدارة. سيُراجع الطلب خلال 24-48 ساعة.',
+                          context.tr(
+                            'تغيير رقم الجوال يتطلب موافقة الإدارة. سيُراجع الطلب خلال 24-48 ساعة.',
+                          ),
                           style: AppTextStyles.caption.copyWith(
-                              color: const Color(0xFF92400E)),
+                            color: const Color(0xFF92400E),
+                          ),
                         ),
                       ),
                     ],
@@ -497,10 +593,10 @@ class _PhoneModalState extends State<_PhoneModal> {
                   keyboardType: TextInputType.phone,
                   inputFormatters: phoneInputFormatters,
                   decoration: InputDecoration(
-                    labelText: 'رقم الجوال الجديد',
+                    labelText: context.tr('رقم الجوال الجديد'),
                     border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.radiusLg)),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                    ),
                     prefixIcon: const Icon(Icons.phone_outlined),
                   ),
                 ),
@@ -509,10 +605,10 @@ class _PhoneModalState extends State<_PhoneModal> {
                   controller: _reasonCtrl,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: 'سبب التغيير',
+                    labelText: context.tr('سبب التغيير'),
                     border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.radiusLg)),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                    ),
                     alignLabelWithHint: true,
                   ),
                 ),
@@ -524,12 +620,15 @@ class _PhoneModalState extends State<_PhoneModal> {
                         onPressed: widget.onClose,
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
-                              vertical: AppSizes.md),
+                            vertical: AppSizes.md,
+                          ),
                           shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppSizes.radiusLg)),
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusLg,
+                            ),
+                          ),
                         ),
-                        child: const Text('إلغاء'),
+                        child: Text(context.tr('cancel')),
                       ),
                     ),
                     const SizedBox(width: AppSizes.md),
@@ -540,290 +639,20 @@ class _PhoneModalState extends State<_PhoneModal> {
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
-                              vertical: AppSizes.md),
+                            vertical: AppSizes.md,
+                          ),
                           shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppSizes.radiusLg)),
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusLg,
+                            ),
+                          ),
                         ),
-                        child: const Text('إرسال الطلب'),
+                        child: Text(context.tr('إرسال الطلب')),
                       ),
                     ),
                   ],
                 ),
               ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmailModal extends StatefulWidget {
-  const _EmailModal({required this.onClose});
-  final VoidCallback onClose;
-
-  @override
-  State<_EmailModal> createState() => _EmailModalState();
-}
-
-class _EmailModalState extends State<_EmailModal> {
-  final _emailCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _emailCtrl.dispose();
-    _passwordCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusXl + 4)),
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSizes.lg),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF16A34A), Color(0xFF22C55E)],
-                  ),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.email_outlined,
-                        color: Colors.white, size: AppSizes.iconMd),
-                    SizedBox(width: AppSizes.sm),
-                    Text('تغيير البريد الإلكتروني',
-                        style: AppTextStyles.body.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSizes.lg),
-              TextField(
-                controller: _emailCtrl,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'البريد الإلكتروني الجديد',
-                  border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusLg)),
-                  prefixIcon: const Icon(Icons.email_outlined),
-                ),
-              ),
-              const SizedBox(height: AppSizes.md),
-              TextField(
-                controller: _passwordCtrl,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'تأكيد كلمة المرور',
-                  border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusLg)),
-                  prefixIcon: const Icon(Icons.lock_outline),
-                ),
-              ),
-              const SizedBox(height: AppSizes.lg),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: widget.onClose,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: AppSizes.md),
-                        shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppSizes.radiusLg)),
-                      ),
-                      child: const Text('إلغاء'),
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.md),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: widget.onClose,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF16A34A),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: AppSizes.md),
-                        shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppSizes.radiusLg)),
-                      ),
-                      child: const Text('تأكيد'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PasswordModal extends StatefulWidget {
-  const _PasswordModal({required this.onClose});
-  final VoidCallback onClose;
-
-  @override
-  State<_PasswordModal> createState() => _PasswordModalState();
-}
-
-class _PasswordModalState extends State<_PasswordModal> {
-  final _currentCtrl = TextEditingController();
-  final _newCtrl = TextEditingController();
-  final _confirmCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _currentCtrl.dispose();
-    _newCtrl.dispose();
-    _confirmCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusXl + 4)),
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSizes.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSizes.lg),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFEA580C), Color(0xFFF97316)],
-                  ),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.lock_outline,
-                        color: Colors.white, size: AppSizes.iconMd),
-                    SizedBox(width: AppSizes.sm),
-                    Text('تغيير كلمة المرور',
-                        style: AppTextStyles.body.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSizes.lg),
-              TextField(
-                controller: _currentCtrl,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'كلمة المرور الحالية',
-                  border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusLg)),
-                  prefixIcon: const Icon(Icons.lock_outline),
-                ),
-              ),
-              const SizedBox(height: AppSizes.md),
-              TextField(
-                controller: _newCtrl,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'كلمة المرور الجديدة',
-                  border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusLg)),
-                  prefixIcon: const Icon(Icons.lock_outline),
-                ),
-              ),
-              const SizedBox(height: AppSizes.md),
-              TextField(
-                controller: _confirmCtrl,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'تأكيد كلمة المرور الجديدة',
-                  border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusLg)),
-                  prefixIcon: const Icon(Icons.lock_outline),
-                ),
-              ),
-              const SizedBox(height: AppSizes.md),
-              Container(
-                padding: const EdgeInsets.all(AppSizes.md),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDBEAFE),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.info_outline,
-                        size: AppSizes.iconSm, color: Color(0xFF2563EB)),
-                    SizedBox(width: AppSizes.sm),
-                    Expanded(
-                      child: Text(
-                        'يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل مع أرقام وحروف.',
-                        style: AppTextStyles.caption.copyWith(
-                            color: const Color(0xFF1D4ED8)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSizes.lg),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: widget.onClose,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: AppSizes.md),
-                        shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppSizes.radiusLg)),
-                      ),
-                      child: const Text('إلغاء'),
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.md),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: widget.onClose,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEA580C),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: AppSizes.md),
-                        shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppSizes.radiusLg)),
-                      ),
-                      child: const Text('تغيير'),
-                    ),
-                  ),
-                ],
-              ),
             ],
           ),
         ),

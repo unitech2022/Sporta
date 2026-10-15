@@ -18,18 +18,30 @@ abstract class AppTheme {
       error: AppColors.destructive,
       onError: Colors.white,
       outline: AppColors.border,
+      // Material 3 draws every decorative separator from outlineVariant, so it
+      // has to match the divider token or stray lines stay dark.
+      outlineVariant: AppColors.divider,
     );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       fontFamily: GoogleFonts.ibmPlexSansArabic().fontFamily,
+      fontFamilyFallback: AppTextStyles.emojiFallback,
       scaffoldBackgroundColor: AppColors.background,
-      dividerColor: AppColors.border,
+      dividerColor: AppColors.divider,
+      dividerTheme: const DividerThemeData(
+        color: AppColors.divider,
+        thickness: 0.3,
+      ),
       textTheme: TextTheme(
         headlineLarge: AppTextStyles.heading1,
         headlineMedium: AppTextStyles.heading2,
         headlineSmall: AppTextStyles.heading3,
+        // بدونها تأخذ عناوين الشريط العلوي والقوائم أحجام Material (22/16).
+        titleLarge: AppTextStyles.heading3,
+        titleMedium: AppTextStyles.bodyMedium,
+        titleSmall: AppTextStyles.bodySmall,
         bodyLarge: AppTextStyles.body,
         bodyMedium: AppTextStyles.bodySmall,
         bodySmall: AppTextStyles.caption,

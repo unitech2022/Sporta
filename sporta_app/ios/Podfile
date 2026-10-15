@@ -1,5 +1,6 @@
-# Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+# أدنى إصدار مدعوم. آبل تشترط 15.0 كحد أدنى للرفع على App Store Connect
+# اعتباراً من ربيع 2027 (ITMS-90068)، وOneSignal 5.x يتطلب 12+ أصلاً.
+platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -39,5 +40,12 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    # بعض الإضافات تشحن هدفاً أقدم (flutter_secure_storage يضع 9.0)، فيحذّر
+    # Xcode عند كل بناء. نرفع الجميع إلى هدف التطبيق نفسه.
+    target.build_configurations.each do |config|
+      current = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0' if current < 15.0
+    end
   end
 end

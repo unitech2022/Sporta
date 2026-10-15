@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Sporta brand palette ── */
+  --color-brand-cyan:       #2AB5CE;
+  --color-brand-cyan-dark:  #1E9AB0;
+  --color-brand-cyan-light: #E8F8FB;
+  --color-brand-navy:       #0A2540;
+  --color-brand-navy-90:    #0A2540E6;
+  --color-brand-gold:       #F0C040;
+
+  /* Alias the Tailwind "primary" slot so utility classes work */
+  --color-primary-50:  #E8F8FB;
+  --color-primary-100: #C5EDF5;
+  --color-primary-200: #8DDAE9;
+  --color-primary-300: #55C7DC;
+  --color-primary-400: #2AB5CE;
+  --color-primary-500: #2AB5CE;
+  --color-primary-600: #1E9AB0;
+  --color-primary-700: #167D90;
+  --color-primary-800: #0D6070;
+  --color-primary-900: #0A2540;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #F8F9FA;
+  direction: rtl;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Hides the scrollbar UI while keeping the element scrollable. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

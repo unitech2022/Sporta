@@ -1,3 +1,4 @@
+import 'package:sporta_app/core/state/app_scope.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
@@ -22,8 +23,7 @@ class CourtNumberPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'اختر رقم الملعب',
+        Text(context.tr('اختر رقم الملعب'),
           style: AppTextStyles.heading2.copyWith(color: AppColors.secondary),
         ),
         const SizedBox(height: AppSizes.md),

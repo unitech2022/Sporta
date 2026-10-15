@@ -1,36 +1,40 @@
+import 'package:sporta_app/core/state/app_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../../friends/data/friend_repository.dart';
+import '../../../friends/domain/entities/player_summary.dart';
 import 'create_match_choice_button.dart';
 import 'create_match_select_field.dart';
-
-class _Player {
-  const _Player({required this.id, required this.name, required this.level});
-
-  final String id;
-  final String name;
-  final String level;
-}
-
-// قائمة اللاعبين المتاحة (mock data)
-const List<_Player> _availablePlayers = [
-  _Player(id: '1', name: 'محمد العتيبي', level: '5.2'),
-  _Player(id: '2', name: 'فهد الدوسري', level: '5.8'),
-  _Player(id: '3', name: 'سعود القحطاني', level: '5.5'),
-  _Player(id: '4', name: 'عبدالله السالم', level: '6.0'),
-  _Player(id: '5', name: 'خالد المطيري', level: '5.3'),
-  _Player(id: '6', name: 'ناصر الشمري', level: '5.7'),
-  _Player(id: '7', name: 'علي الغامدي', level: '5.4'),
-  _Player(id: '8', name: 'سلطان العنزي', level: '5.9'),
-];
+import '../../../../core/localization/tr_global.dart';
 
 /// "دعوة لاعبين (اختياري)" card: expandable section to invite specific
-/// players and pick how long the invitation offer stays valid.
+/// players (loaded from the user's friends) and pick how long the invitation
+/// offer stays valid. Selected player ids are reported via [onInvitedChanged].
 class CreateMatchInviteSection extends StatefulWidget {
-  const CreateMatchInviteSection({super.key});
+  const CreateMatchInviteSection({
+    super.key,
+    this.onInvitedChanged,
+    this.onDurationChanged,
+    this.excludeUserIds = const {},
+    this.tooltip,
+  });
+
+  /// Called whenever the set of invited players changes.
+  final void Function(List<int> userIds)? onInvitedChanged;
+
+  /// Called whenever the offer duration (in hours) changes.
+  final void Function(int hours)? onDurationChanged;
+
+  /// Friends hidden from the list (e.g. the already-picked partner).
+  final Set<int> excludeUserIds;
+
+  /// Header tooltip; defaults to the match wording.
+  final String? tooltip;
 
   @override
   State<CreateMatchInviteSection> createState() =>
@@ -38,7 +42,11 @@ class CreateMatchInviteSection extends StatefulWidget {
 }
 
 class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
-  final List<_Player> _invitedPlayers = [];
+  final _friendRepo = getIt<FriendRepository>();
+
+  List<PlayerSummary> _available = [];
+  bool _loading = true;
+  final List<PlayerSummary> _invitedPlayers = [];
   bool _showInviteSection = false;
   int _inviteDuration = 24;
   bool _showCustomDuration = false;
@@ -50,6 +58,29 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
     _customDurationController.dispose();
     super.dispose();
   }
+
+  Future<void> _loadFriends() async {
+    try {
+      final friends = await _friendRepo.fetchFriends();
+      if (!mounted) return;
+      setState(() {
+        _available = friends;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
+  }
+
+  void _setDuration(int hours) {
+    _inviteDuration = hours;
+    widget.onDurationChanged?.call(hours);
+  }
+
+  void _notify() => widget.onInvitedChanged?.call(
+    _invitedPlayers.map((p) => p.userId).toList(),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -68,15 +99,20 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Tooltip(
-                message: 'دعوة لاعبين محددين للانضمام للمباراة',
+                message:
+                    widget.tooltip ??
+                    context.tr('دعوة لاعبين محددين للانضمام للمباراة'),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.person_add_alt_1_outlined,
-                        size: AppSizes.iconMd, color: AppColors.primary),
+                    const Icon(
+                      Icons.person_add_alt_1_outlined,
+                      size: AppSizes.iconMd,
+                      color: AppColors.primary,
+                    ),
                     SizedBox(width: AppSizes.sm),
                     Text(
-                      'دعوة لاعبين (اختياري)',
+                      context.tr('دعوة لاعبين (اختياري)'),
                       style: AppTextStyles.body.copyWith(
                         color: AppColors.secondary,
                         fontWeight: FontWeight.w500,
@@ -86,15 +122,20 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
                 ),
               ),
               InkWell(
-                onTap: () => setState(
-                    () => _showInviteSection = !_showInviteSection),
+                onTap: () {
+                  setState(() => _showInviteSection = !_showInviteSection);
+                  if (_showInviteSection && _loading) _loadFriends();
+                },
                 borderRadius: BorderRadius.circular(AppSizes.radiusSm),
                 child: Padding(
                   padding: const EdgeInsets.all(AppSizes.xs),
                   child: Text(
-                    _showInviteSection ? 'إخفاء' : 'إضافة دعوات',
-                    style: AppTextStyles.bodySmall
-                        .copyWith(color: AppColors.primary),
+                    _showInviteSection
+                        ? context.tr('إخفاء')
+                        : context.tr('إضافة دعوات'),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               ),
@@ -104,7 +145,9 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
             SizedBox(height: AppSizes.md),
             if (_invitedPlayers.isNotEmpty) ...[
               Text(
-                'اللاعبين المدعوين (${_invitedPlayers.length})',
+                context.trArgs('اللاعبين المدعوين ({p0})', {
+                  'p0': _invitedPlayers.length,
+                }),
                 style: AppTextStyles.caption,
               ),
               SizedBox(height: AppSizes.sm),
@@ -114,22 +157,38 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
               ],
               SizedBox(height: AppSizes.sm),
             ],
-            Text('اختر اللاعبين', style: AppTextStyles.caption),
+            Text(context.tr('اختر اللاعبين'), style: AppTextStyles.caption),
             const SizedBox(height: AppSizes.sm),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 192),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    for (final player in _availablePlayers.where((p) =>
-                        !_invitedPlayers.any((ip) => ip.id == p.id))) ...[
-                      _availablePlayerTile(player),
-                      SizedBox(height: AppSizes.sm),
+            if (_loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSizes.lg),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_available.isEmpty)
+              Text(
+                context.tr('لا يوجد أصدقاء لدعوتهم بعد — أضِف أصدقاء أولاً'),
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.mutedForeground,
+                ),
+              )
+            else
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 192),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      for (final player in _available.where(
+                        (p) =>
+                            !widget.excludeUserIds.contains(p.userId) &&
+                            !_invitedPlayers.any((ip) => ip.userId == p.userId),
+                      )) ...[
+                        _availablePlayerTile(player),
+                        SizedBox(height: AppSizes.sm),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
             if (_invitedPlayers.isNotEmpty) ...[
               SizedBox(height: AppSizes.sm),
               _offerDurationSection(),
@@ -139,6 +198,9 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
       ),
     );
   }
+
+  String _levelLabel(PlayerSummary p) =>
+      p.level != null ? '${p.level}' : trg('؟');
 
   Widget _levelCircle(String level, Gradient gradient) {
     return Container(
@@ -156,7 +218,7 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
     );
   }
 
-  Widget _playerInfo(_Player player) {
+  Widget _playerInfo(PlayerSummary player) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -167,30 +229,43 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        Text('مستوى ${player.level}', style: AppTextStyles.caption),
+        Text(
+          player.level != null
+              ? context.trArgs('مستوى {p0}', {'p0': player.level})
+              : context.tr('لاعب'),
+          style: AppTextStyles.caption,
+        ),
       ],
     );
   }
 
-  Widget _invitedPlayerTile(_Player player) {
+  Widget _invitedPlayerTile(PlayerSummary player) {
     return Container(
       padding: const EdgeInsets.all(AppSizes.md),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.05),
-        border:
-            Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
       ),
       child: Row(
         children: [
-          _levelCircle(player.level, AppColors.primaryGradient),
+          _levelCircle(_levelLabel(player), AppColors.primaryGradient),
           const SizedBox(width: AppSizes.md),
           Expanded(child: _playerInfo(player)),
           IconButton(
-            onPressed: () => setState(
-                () => _invitedPlayers.removeWhere((p) => p.id == player.id)),
-            icon: const Icon(Icons.close,
-                size: AppSizes.iconSm, color: AppColors.destructive),
+            onPressed: () {
+              setState(
+                () => _invitedPlayers.removeWhere(
+                  (p) => p.userId == player.userId,
+                ),
+              );
+              _notify();
+            },
+            icon: const Icon(
+              Icons.close,
+              size: AppSizes.iconSm,
+              color: AppColors.destructive,
+            ),
             visualDensity: VisualDensity.compact,
           ),
         ],
@@ -198,7 +273,7 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
     );
   }
 
-  Widget _availablePlayerTile(_Player player) {
+  Widget _availablePlayerTile(PlayerSummary player) {
     return Material(
       color: AppColors.card,
       shape: RoundedRectangleBorder(
@@ -206,13 +281,16 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
         side: const BorderSide(color: AppColors.border),
       ),
       child: InkWell(
-        onTap: () => setState(() => _invitedPlayers.add(player)),
+        onTap: () {
+          setState(() => _invitedPlayers.add(player));
+          _notify();
+        },
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.md),
           child: Row(
             children: [
-              _levelCircle(player.level, AppColors.headerGradient),
+              _levelCircle(_levelLabel(player), AppColors.headerGradient),
               SizedBox(width: AppSizes.md),
               Expanded(child: _playerInfo(player)),
             ],
@@ -227,7 +305,7 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'مدة العرض للموافقة',
+          context.tr('مدة العرض للموافقة'),
           style: AppTextStyles.bodySmall.copyWith(color: AppColors.secondary),
         ),
         const SizedBox(height: AppSizes.sm),
@@ -237,11 +315,10 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
               Expanded(
                 child: CreateMatchChoiceButton(
                   label: '$hours',
-                  subLabel: hours == 1 ? 'ساعة' : 'س',
-                  selected:
-                      _inviteDuration == hours && !_showCustomDuration,
+                  subLabel: hours == 1 ? trg('ساعة') : trg('س'),
+                  selected: _inviteDuration == hours && !_showCustomDuration,
                   onTap: () => setState(() {
-                    _inviteDuration = hours;
+                    _setDuration(hours);
                     _showCustomDuration = false;
                     _customDurationController.clear();
                   }),
@@ -276,10 +353,11 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: AppSizes.sm),
                   child: Text(
-                    '+ مدة مخصصة',
+                    context.tr('+ مدة مخصصة'),
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.bodySmall
-                        .copyWith(color: AppColors.primary),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               ),
@@ -294,26 +372,36 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   textAlign: TextAlign.center,
-                  style:
-                      AppTextStyles.body.copyWith(color: AppColors.secondary),
-                  decoration: createMatchInputDecoration(
-                          hint: 'أدخل عدد الساعات')
-                      .copyWith(
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                      borderSide: const BorderSide(
-                          color: AppColors.primary, width: 2),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                      borderSide: const BorderSide(
-                          color: AppColors.primary, width: 2),
-                    ),
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.secondary,
                   ),
+                  decoration:
+                      createMatchInputDecoration(
+                        hint: context.tr('أدخل عدد الساعات'),
+                      ).copyWith(
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusLg,
+                          ),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusLg,
+                          ),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                      ),
                   onChanged: (value) {
                     final parsed = int.tryParse(value);
                     if (parsed != null && parsed >= 1 && parsed <= 48) {
-                      setState(() => _inviteDuration = parsed);
+                      setState(() => _setDuration(parsed));
                     }
                   },
                 ),
@@ -326,7 +414,7 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
                   onTap: () => setState(() {
                     _showCustomDuration = false;
                     _customDurationController.clear();
-                    _inviteDuration = 24;
+                    _setDuration(24);
                   }),
                   borderRadius: BorderRadius.circular(AppSizes.radiusLg),
                   child: Padding(
@@ -334,8 +422,11 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
                       horizontal: AppSizes.lg,
                       vertical: AppSizes.md,
                     ),
-                    child: Icon(Icons.close,
-                        size: AppSizes.iconSm, color: AppColors.secondary),
+                    child: Icon(
+                      Icons.close,
+                      size: AppSizes.iconSm,
+                      color: AppColors.secondary,
+                    ),
                   ),
                 ),
               ),
@@ -345,8 +436,13 @@ class _CreateMatchInviteSectionState extends State<CreateMatchInviteSection> {
         SizedBox(
           width: double.infinity,
           child: Text(
-            'سيتلقى اللاعبون إشعاراً ويجب عليهم الموافقة خلال '
-            '$_inviteDuration ${_inviteDuration == 1 ? 'ساعة' : 'ساعات'}',
+            context.trArgs(
+              'سيتلقى اللاعبون إشعاراً ويجب عليهم الموافقة خلال {d}',
+              {
+                'd':
+                    '$_inviteDuration ${context.tr(_inviteDuration == 1 ? 'ساعة' : 'ساعات')}',
+              },
+            ),
             textAlign: TextAlign.center,
             style: AppTextStyles.caption,
           ),

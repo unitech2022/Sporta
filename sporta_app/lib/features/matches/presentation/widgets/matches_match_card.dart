@@ -22,7 +22,7 @@ class MatchesMatchCard extends StatelessWidget {
     this.backgroundGradient,
     this.borderColor = AppColors.border,
     this.borderWidth = 1,
-    this.dividerColor = AppColors.border,
+    this.dividerColor = AppColors.divider,
     required this.time,
     this.timeIconColor = AppColors.primary,
     required this.actionLabel,
@@ -127,8 +127,9 @@ class MatchesMatchCard extends StatelessWidget {
                         venue,
                         style: AppTextStyles.bodySmall.copyWith(
                           color: AppColors.secondary,
-                          fontWeight:
-                              venueBold ? FontWeight.w500 : FontWeight.w400,
+                          fontWeight: venueBold
+                              ? FontWeight.w500
+                              : FontWeight.w400,
                         ),
                       ),
                     ),
@@ -151,7 +152,9 @@ class MatchesMatchCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.only(top: AppSizes.md),
                   decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: dividerColor)),
+                    border: Border(
+                      top: BorderSide(color: dividerColor, width: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -164,8 +167,9 @@ class MatchesMatchCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           time,
-                          style: AppTextStyles.bodySmall
-                              .copyWith(color: AppColors.secondary),
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.secondary,
+                          ),
                         ),
                       ),
                       _ActionButton(
@@ -201,10 +205,12 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // بلا `onPressed` الزر معطّل (مثلاً "مكتمل")، فيُعرض رمادياً لا بلون الإجراء.
+    final enabled = onPressed != null;
     return Material(
-      color: color,
+      color: enabled ? color : AppColors.muted,
       borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-      elevation: 1,
+      elevation: enabled ? 1 : 0,
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(AppSizes.radiusSm),
@@ -217,12 +223,18 @@ class _ActionButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: AppSizes.iconSm, color: Colors.white),
+                Icon(
+                  icon,
+                  size: AppSizes.iconSm,
+                  color: enabled ? Colors.white : AppColors.mutedForeground,
+                ),
                 SizedBox(width: 6),
               ],
               Text(
                 label,
-                style: AppTextStyles.bodySmall.copyWith(color: Colors.white),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: enabled ? Colors.white : AppColors.mutedForeground,
+                ),
               ),
             ],
           ),

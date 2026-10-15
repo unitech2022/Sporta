@@ -1,3 +1,4 @@
+import 'package:sporta_app/core/state/app_scope.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
@@ -37,7 +38,7 @@ class CourtInfoCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSizes.xs),
               Text(
-                '(${court.reviews} تقييم)',
+                context.trArgs('({p0} تقييم)', {'p0': court.reviews}),
                 style: AppTextStyles.caption
                     .copyWith(color: AppColors.mutedForeground),
               ),
@@ -64,18 +65,22 @@ class CourtInfoCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _PriceStrip(
-                    label: 'السعر الاعتيادي',
-                    price: court.basePrice,
+                    label: context.tr('السعر الاعتيادي'),
+                    price: court.totalPrice,
                   ),
                 ),
-                Container(width: 1, height: 40, color: AppColors.border),
-                Expanded(
-                  child: _PriceStrip(
-                    label: 'ساعة الذروة',
-                    price: court.peakHourPrice,
-                    isPeak: true,
+                // خانة الذروة لا معنى لها حين يساوي سعرُها الاعتيادي (ملعب
+                // مسعَّر بالمدد بلا قواعد ذروة) — نُخفيها بدل عرض رقمين متطابقين.
+                if (court.peakHourPrice > court.totalPrice) ...[
+                  Container(width: 1, height: 40, color: AppColors.border),
+                  Expanded(
+                    child: _PriceStrip(
+                      label: context.tr('ساعة الذروة'),
+                      price: court.peakHourPrice,
+                      isPeak: true,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -149,7 +154,7 @@ class _PriceStrip extends StatelessWidget {
                 const SizedBox(width: 2),
               ],
               Text(
-                '$price ر.س',
+                context.trArgs('{p0} ر.س', {'p0': price}),
                 style: AppTextStyles.caption.copyWith(
                   fontWeight: FontWeight.bold,
                   color: isPeak

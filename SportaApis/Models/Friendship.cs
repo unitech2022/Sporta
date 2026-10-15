@@ -15,4 +15,9 @@ public class Friendship : BaseEntity
 
     public FriendshipStatus Status { get; set; } = FriendshipStatus.Pending;
     public DateTime? RespondedAt { get; set; }
+
+    /// <summary>Favoriting is directional — each side marks the other as a
+    /// favorite partner independently.</summary>
+    public bool SenderFavorite { get; set; }
+    public bool ReceiverFavorite { get; set; }
 }

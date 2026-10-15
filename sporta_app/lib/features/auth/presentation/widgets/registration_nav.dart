@@ -1,3 +1,4 @@
+import 'package:sporta_app/core/widgets/directional_icon.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -7,6 +8,7 @@ import '../../../../core/state/app_scope.dart';
 import '../../../../core/widgets/sporta_logo.dart';
 import '../../../../core/widgets/step_progress_bar.dart';
 import 'circle_back_button.dart';
+import 'language_toggle_button.dart';
 
 /// Gradient header for the registration flow with the step progress bar.
 class RegistrationHeader extends StatelessWidget {
@@ -30,9 +32,9 @@ class RegistrationHeader extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
             AppSizes.pagePadding,
-            AppSizes.xxxl,
+            AppSizes.lg,
             AppSizes.pagePadding,
-            AppSizes.xxl,
+            AppSizes.lg,
           ),
           child: Column(
             children: [
@@ -40,16 +42,23 @@ class RegistrationHeader extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   CircleBackButton(onTap: onBack),
-                  const SportaLogo(width: 64, white: true),
-                  const SizedBox(width: 36),
+                  Text(
+                    context.tr('register'),
+                    style:
+                        AppTextStyles.heading3.copyWith(color: Colors.white),
+                  ),
+                  // تبديل اللغة في مكانه: لا يضيع ما كتبه في خطوات التسجيل.
+                  const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      LanguageToggleButton(compact: true, inPlace: true),
+                      SizedBox(width: AppSizes.sm),
+                      SportaLogo(width: 56, white: true),
+                    ],
+                  ),
                 ],
               ),
-              const SizedBox(height: AppSizes.lg),
-              Text(
-                context.tr('register'),
-                style: AppTextStyles.heading3.copyWith(color: Colors.white),
-              ),
-              const SizedBox(height: AppSizes.lg),
+              const SizedBox(height: AppSizes.md),
               StepProgressBar(currentStep: step, totalSteps: totalSteps),
               const SizedBox(height: AppSizes.sm),
               Text(
@@ -97,9 +106,9 @@ class RegistrationFooter extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
             AppSizes.pagePadding,
-            AppSizes.lg,
+            AppSizes.md,
             AppSizes.pagePadding,
-            AppSizes.xxl,
+            AppSizes.md,
           ),
           child: Row(
             children: [
@@ -129,7 +138,7 @@ class RegistrationFooter extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         ),
       ),
-      icon: const Icon(Icons.chevron_right, size: AppSizes.iconMd),
+      icon: DirectionalIcon(rtl: Icons.chevron_right, ltr: Icons.chevron_left, size: AppSizes.iconMd),
       label: Text(context.tr('back')),
     );
   }
@@ -155,7 +164,7 @@ class RegistrationFooter extends StatelessWidget {
                       : context.tr('next'),
                 ),
                 if (step < totalSteps)
-                  const Icon(Icons.chevron_left, size: AppSizes.iconMd),
+                  DirectionalIcon(rtl: Icons.chevron_left, ltr: Icons.chevron_right, size: AppSizes.iconMd),
               ],
             ),
     );

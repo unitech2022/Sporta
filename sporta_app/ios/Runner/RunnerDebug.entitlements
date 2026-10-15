@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- بناءا Debug وProfile. الغرض الوحيد من هذا الملف أن يحمل بناء التطوير
+	     صلاحية Apple Pay: بدونها ترجع ApplePayService.canPay قيمة false ولا
+	     يظهر الزر أصلاً، فلا يمكن تجربة الدفع إلا من بناء إصدار.
+
+	     ولا يحمل aps-environment عمداً: الإشعارات تُختبر من بناء الإصدار،
+	     وإضافتها هنا تُلزم ملفَّ تزويد التطوير بقدرة الدفع والإشعارات معاً. -->
+	<key>com.apple.developer.in-app-payments</key>
+	<array>
+		<string>merchant.com.sportaplatform.app</string>
+	</array>
+</dict>
+</plist>

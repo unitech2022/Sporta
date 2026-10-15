@@ -1,18 +1,22 @@
 part of 'level_cubit.dart';
 
-enum LevelStatus { answering, submitting, success, failure }
+enum LevelStatus { loading, answering, submitting, success, failure }
 
 class LevelState extends Equatable {
   const LevelState({
     this.index = 0,
+    this.questions = const [],
     this.answers = const [],
-    this.status = LevelStatus.answering,
+    this.status = LevelStatus.loading,
     this.error,
     this.result,
   });
 
   /// Index of the question currently shown.
   final int index;
+
+  /// The admin-defined questions for this sport (loaded from the API).
+  final List<LevelQuestion> questions;
 
   /// Chosen option score per question (null until answered).
   final List<int?> answers;
@@ -21,6 +25,7 @@ class LevelState extends Equatable {
   final String? error;
   final LevelAssessmentResult? result;
 
+  bool get isLoading => status == LevelStatus.loading;
   bool get isSubmitting => status == LevelStatus.submitting;
 
   /// Whether the current question has been answered.
@@ -34,6 +39,7 @@ class LevelState extends Equatable {
 
   LevelState copyWith({
     int? index,
+    List<LevelQuestion>? questions,
     List<int?>? answers,
     LevelStatus? status,
     String? error,
@@ -41,6 +47,7 @@ class LevelState extends Equatable {
   }) {
     return LevelState(
       index: index ?? this.index,
+      questions: questions ?? this.questions,
       answers: answers ?? this.answers,
       status: status ?? this.status,
       error: error,
@@ -49,5 +56,6 @@ class LevelState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [index, answers, status, error, result];
+  List<Object?> get props =>
+      [index, questions, answers, status, error, result];
 }

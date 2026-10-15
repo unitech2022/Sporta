@@ -24,4 +24,9 @@ extension AppScopeX on BuildContext {
 
   /// Translates [key] using the current app language.
   String tr(String key) => AppTranslations.of(appSettings.language, key);
+
+  /// Translates a template key, substituting `{name}` placeholders with
+  /// [params] values after translation (keeps word order valid per language).
+  String trArgs(String key, Map<String, Object?> params) =>
+      AppTranslations.ofArgs(appSettings.language, key, params);
 }

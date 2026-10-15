@@ -1,8 +1,10 @@
+import 'package:sporta_app/core/state/app_scope.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/localization/tr_global.dart';
 
 /// "معاينة المباراة" card shown once the form becomes valid.
 class CreateMatchPreviewCard extends StatelessWidget {
@@ -50,25 +52,24 @@ class CreateMatchPreviewCard extends StatelessWidget {
               ),
               SizedBox(width: AppSizes.sm),
               Text(
-                'معاينة المباراة',
-                style:
-                    AppTextStyles.body.copyWith(color: AppColors.secondary),
+                context.tr('معاينة المباراة'),
+                style: AppTextStyles.body.copyWith(color: AppColors.secondary),
               ),
             ],
           ),
           const SizedBox(height: AppSizes.md),
-          _row('الملعب:', courtName),
+          _row(trg('الملعب:'), courtName),
           SizedBox(height: AppSizes.sm),
-          _row('التاريخ:', date),
+          _row(trg('التاريخ:'), date),
           SizedBox(height: AppSizes.sm),
-          _row('الوقت:', time),
+          _row(trg('الوقت:'), time),
           SizedBox(height: AppSizes.sm),
-          _row('النوع:', typeLabel),
+          _row(trg('النوع:'), typeLabel),
           SizedBox(height: AppSizes.sm),
-          _row('المستوى:', '$minLevel - $maxLevel'),
+          _row(trg('المستوى:'), '$minLevel - $maxLevel'),
           if (costPerPlayer.isNotEmpty) ...[
             SizedBox(height: AppSizes.sm),
-            _row('التكلفة:', '$costPerPlayer ر.س'),
+            _row(trg('التكلفة:'), trgArgs('{p0} ر.س', {'p0': costPerPlayer})),
           ],
         ],
       ),
@@ -81,13 +82,13 @@ class CreateMatchPreviewCard extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTextStyles.bodySmall
-              .copyWith(color: AppColors.mutedForeground),
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.mutedForeground,
+          ),
         ),
         Text(
           value,
-          style:
-              AppTextStyles.bodySmall.copyWith(color: AppColors.secondary),
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.secondary),
         ),
       ],
     );

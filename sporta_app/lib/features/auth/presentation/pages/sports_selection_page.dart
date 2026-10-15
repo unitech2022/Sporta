@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/state/app_scope.dart';
 import '../state/auth_scope.dart';
 import '../widgets/sports_selection_widgets.dart';
+import '../../../../core/localization/tr_global.dart';
+import '../../../../core/utils/system_insets.dart';
 
 /// Post-login screen: pick a favorite sport (only Padel is available; the rest
 /// are shown as "coming soon"). The choice is saved to the backend before
@@ -39,7 +41,11 @@ class _SportsSelectionPageState extends State<SportsSelectionPage> {
       widget.onContinue();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.errorMessage ?? 'حدث خطأ غير متوقع')),
+        SnackBar(
+          content: Text(
+            auth.errorMessage ?? context.tr('auth.sports_selection_page.unexpectedError'),
+          ),
+        ),
       );
     }
   }
@@ -55,10 +61,10 @@ class _SportsSelectionPageState extends State<SportsSelectionPage> {
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
+                  padding: context.safeBottom(const EdgeInsets.symmetric(
                     horizontal: AppSizes.pagePadding,
                     vertical: AppSizes.xxl,
-                  ),
+                  )),
                   child: _buildContent(context),
                 ),
               ),
@@ -73,16 +79,18 @@ class _SportsSelectionPageState extends State<SportsSelectionPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SportsHeaderBadge(label: 'اختر رياضتك المفضلة'),
+        SportsHeaderBadge(
+          label: context.tr('auth.sports_selection_page.headerBadge'),
+        ),
         const SizedBox(height: AppSizes.xxl),
         Text(
-          'مرحباً بك في SPORTA',
+          context.tr('auth.sports_selection_page.welcomeTitle'),
           textAlign: TextAlign.center,
           style: AppTextStyles.heading1.copyWith(color: Colors.white),
         ),
         const SizedBox(height: AppSizes.sm),
         Text(
-          'لكل رياضة تجربة مخصصة في التطبيق',
+          context.tr('auth.sports_selection_page.subtitle'),
           textAlign: TextAlign.center,
           style: AppTextStyles.bodySmall.copyWith(
             color: Colors.white.withValues(alpha: 0.5),
@@ -94,17 +102,17 @@ class _SportsSelectionPageState extends State<SportsSelectionPage> {
             Expanded(
               child: SportCard(
                 emoji: '🎾',
-                nameAr: 'البادل',
+                nameAr: trg('البادل'),
                 nameEn: 'Padel',
                 available: true,
                 onTap: () => _select('padel'),
               ),
             ),
             const SizedBox(width: AppSizes.lg),
-            const Expanded(
+            Expanded(
               child: SportCard(
                 emoji: '⚽',
-                nameAr: 'كرة القدم',
+                nameAr: trg('كرة القدم'),
                 nameEn: 'Football',
                 available: false,
               ),
@@ -115,7 +123,7 @@ class _SportsSelectionPageState extends State<SportsSelectionPage> {
         const ComingSoonRow(),
         const SizedBox(height: AppSizes.xxxl),
         Text(
-          'ندعوك للاستمتاع بالتجربة 🎯',
+          context.tr('auth.sports_selection_page.enjoyHint'),
           textAlign: TextAlign.center,
           style: AppTextStyles.caption.copyWith(
             color: Colors.white.withValues(alpha: 0.4),
@@ -135,7 +143,7 @@ class _SportsSelectionPageState extends State<SportsSelectionPage> {
                       color: Colors.white,
                     ),
                   )
-                : const Text('ابدأ تجربة البادل'),
+                : Text(context.tr('auth.sports_selection_page.startPadelButton')),
           ),
         ),
       ],

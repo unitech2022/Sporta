@@ -6,5 +6,6 @@ public enum MatchStatus
     Full = 1,       // مكتملة - 4 لاعبين
     InProgress = 2, // جارية
     Completed = 3,  // منتهية
-    Cancelled = 4   // ملغاة
+    Cancelled = 4,  // ملغاة
+    PendingApproval = 5 // بانتظار موافقة الملعب على استضافة المباراة
 }

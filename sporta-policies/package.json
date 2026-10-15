@@ -1,0 +1,14 @@
+{
+  "name": "sporta-policies",
+  "version": "1.0.0",
+  "private": true,
+  "description": "موقع سياسات سبورتا — صفحات ثابتة تُبنى من نص السياسات الحيّ في الـ API",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "preview": "npm run build && node serve.mjs"
+  }
+}

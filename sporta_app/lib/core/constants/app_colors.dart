@@ -16,6 +16,10 @@ abstract class AppColors {
   static const Color muted = Color(0xFFE8EEF2);
   static const Color mutedForeground = Color(0xFF6B7280);
   static const Color border = Color(0xFFE5E7EB);
+
+  /// Hairline separator between list rows. Deliberately a hair away from white
+  /// so the line reads as a hint of structure rather than a drawn border.
+  static const Color divider = Color(0xFFF0F1F3);
   static const Color inputBackground = Color(0xFFFFFFFF);
   static const Color switchBackground = Color(0xFFD1D5DB);
 

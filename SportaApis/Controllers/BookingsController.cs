@@ -39,14 +39,38 @@ public class BookingsController : ControllerBase
         }
     }
 
-    // GET /api/bookings/me
-    [HttpGet("me")]
-    public async Task<IActionResult> GetMyBookings()
+    // POST /api/bookings/quote — تسعير قبل الحجز (لا يُنشئ حجزاً ولا يخصم رصيداً)
+    [HttpPost("quote")]
+    public async Task<IActionResult> Quote([FromBody] BookingQuoteRequest request)
     {
         try
         {
-            var bookings = await _bookingService.GetMyBookingsAsync(CurrentUserId);
-            return Ok(ApiResponse<List<BookingDto>>.Ok(bookings));
+            var quote = await _bookingService.QuoteAsync(CurrentUserId, request);
+            return Ok(ApiResponse<BookingQuoteDto>.Ok(quote));
+        }
+        catch (AuthException ex)
+        {
+            return BadRequest(ApiResponse<object>.Fail(ex.Message, ex.MessageAr, ex.Code));
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, ApiResponse<object>.Fail(
+                "An unexpected error occurred", "حدث خطأ غير متوقع", "UNEXPECTED"));
+        }
+    }
+
+    // GET /api/bookings/me
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMyBookings(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? status = null)
+    {
+        try
+        {
+            var bookings = await _bookingService.GetMyBookingsAsync(
+                CurrentUserId, page, pageSize, status);
+            return Ok(ApiResponse<PagedResult<BookingDto>>.Ok(bookings));
         }
         catch (Exception)
         {

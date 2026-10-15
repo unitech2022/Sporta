@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- بناء الإصدار يذهب إلى TestFlight/App Store، وهناك تُسلَّم الإشعارات
+	     عبر خوادم APNs الإنتاجية. قيمة development تُوجّهها إلى الخوادم
+	     التجريبية فلا تصل أي إشعارة للمستخدمين. -->
+	<key>aps-environment</key>
+	<string>production</string>
+	<!-- Apple Pay: المعرّف هنا يجب أن يطابق ثلاثة مواضع وإلا فشل الدفع —
+	     ApplePay:MerchantId في إعدادات الـ API، وقدرة Apple Pay على App ID
+	     في حساب المطوّر، وشهادة المعالجة المرفوعة إلى Moyasar عبر FINY.
+	     التوكن الذي تصنعه PassKit مشفَّر لتلك الشهادة وحدها. -->
+	<key>com.apple.developer.in-app-payments</key>
+	<array>
+		<string>merchant.com.sportaplatform.app</string>
+	</array>
+</dict>
+</plist>

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/state/app_scope.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/localization/tr_global.dart';
 
 /// Decorative starfield painted behind the sports-selection screen.
 class SportsStarsBackground extends StatelessWidget {
@@ -117,7 +119,7 @@ class SportCard extends StatelessWidget {
               Text(emoji, style: const TextStyle(fontSize: 48)),
               const SizedBox(height: AppSizes.md),
               Text(
-                nameAr,
+                isAppArabic ? nameAr : nameEn,
                 style: AppTextStyles.body.copyWith(
                   color: available
                       ? Colors.white
@@ -125,7 +127,7 @@ class SportCard extends StatelessWidget {
                 ),
               ),
               Text(
-                nameEn,
+                isAppArabic ? nameEn : nameAr,
                 style: AppTextStyles.caption.copyWith(
                   color: available
                       ? AppColors.primary.withValues(alpha: 0.7)
@@ -166,7 +168,9 @@ class _AvailabilityTag extends StatelessWidget {
         ),
       ),
       child: Text(
-        available ? 'متاح' : 'قريباً',
+        available
+            ? context.tr('auth.sports_selection_widgets.available')
+            : context.tr('auth.sports_selection_widgets.comingSoon'),
         style: TextStyle(fontSize: 10, color: color),
       ),
     );
@@ -202,7 +206,7 @@ class ComingSoonRow extends StatelessWidget {
               ),
             ),
             child: Text(
-              'قريباً',
+              context.tr('auth.sports_selection_widgets.comingSoon'),
               style:
                   AppTextStyles.caption.copyWith(color: const Color(0xFFD8B4FE)),
             ),
@@ -221,7 +225,7 @@ class ComingSoonRow extends StatelessWidget {
               ),
               const SizedBox(width: AppSizes.md),
               Text(
-                'رياضات أخرى',
+                context.tr('auth.sports_selection_widgets.otherSports'),
                 style: AppTextStyles.bodySmall.copyWith(
                   color: Colors.white.withValues(alpha: 0.6),
                 ),

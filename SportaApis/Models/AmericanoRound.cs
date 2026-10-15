@@ -3,7 +3,7 @@ namespace SportaApis.Models;
 /// <summary>
 /// جولة واحدة داخل مباراة الأمريكانو - التوزيع العادل (5.3)
 /// </summary>
-public class AmericanoRound : BaseEntity
+public class AmericanoRound : BaseEntity, IScoreProposal
 {
     public int AmericanoMatchId { get; set; }
     public AmericanoMatch AmericanoMatch { get; set; } = null!;
@@ -26,4 +26,11 @@ public class AmericanoRound : BaseEntity
     public int? Team1Score { get; set; }
     public int? Team2Score { get; set; }
     public bool IsCompleted { get; set; } = false;
+
+    // نتيجة مقترحة بانتظار تأكيد لاعب من الفريق الآخر (IScoreProposal).
+    public int? ProposedTeam1Score { get; set; }
+    public int? ProposedTeam2Score { get; set; }
+    public int? ProposedById { get; set; }
+    public DateTime? ProposedAt { get; set; }
+    public bool IsDisputed { get; set; }
 }

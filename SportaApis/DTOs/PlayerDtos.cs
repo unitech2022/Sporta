@@ -19,6 +19,36 @@ public class FavoriteSportRequest
     [Required] public string Sport { get; set; } = string.Empty;
 }
 
+public class RequestCoachAssessmentRequest
+{
+    [Required] public int CoachId { get; set; }
+}
+
+public class AssignLevelRequest
+{
+    [Range(1, 7)] public int Level { get; set; }
+    public string? Notes { get; set; }
+}
+
+/// <summary>A level assessment record (any of the 3 paths).</summary>
+public class LevelAssessmentDto
+{
+    public int Id { get; set; }
+
+    /// <summary>"self" | "video" | "coach".</summary>
+    public string Type { get; set; } = string.Empty;
+
+    /// <summary>"pending" | "completed".</summary>
+    public string Status { get; set; } = "pending";
+
+    public string? VideoUrl { get; set; }
+    public string? PlayerName { get; set; }
+    public string? CoachName { get; set; }
+    public int? AssignedLevel { get; set; }
+    public string? AssignedLevelName { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
 // ── Responses ─────────────────────────────────────────────────────────────────
 
 public class LevelAssessmentResultDto

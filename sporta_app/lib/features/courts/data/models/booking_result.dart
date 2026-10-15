@@ -1,3 +1,5 @@
+import '../../../../core/localization/tr_global.dart';
+
 /// Result of a confirmed court booking.
 class BookingResult {
   const BookingResult({
@@ -14,7 +16,7 @@ class BookingResult {
 
   factory BookingResult.fromJson(Map<String, dynamic> json) => BookingResult(
         id: (json['id'] as num?)?.toInt() ?? 0,
-        courtName: json['courtName']?.toString() ?? '',
+        courtName: localizedServerName(json['courtName'], json['courtNameEn']),
         totalPrice: (json['totalPrice'] as num?)?.round() ?? 0,
         status: json['status']?.toString() ?? '',
       );

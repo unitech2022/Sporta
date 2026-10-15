@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_sizes.dart';
+import '../../../../../core/state/app_scope.dart';
 
 /// Cancel / confirm action row at the bottom of the booking screen.
 class BookingActionButtons extends StatelessWidget {
@@ -33,7 +34,7 @@ class BookingActionButtons extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppSizes.radiusLg),
               ),
             ),
-            child: const Text('إلغاء'),
+            child: Text(context.tr('إلغاء')),
           ),
         ),
         const SizedBox(width: AppSizes.md),
@@ -59,7 +60,7 @@ class BookingActionButtons extends StatelessWidget {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text('تأكيد الحجز'),
+                : Text(context.tr('تأكيد الحجز')),
           ),
         ),
       ],

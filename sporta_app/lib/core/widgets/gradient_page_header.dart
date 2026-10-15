@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../constants/app_text_styles.dart';
+import 'directional_icon.dart';
 
 /// Navy gradient header used at the top of most pages.
 /// Shows an optional back button, title, trailing actions and an
@@ -45,7 +46,8 @@ class GradientPageHeader extends StatelessWidget {
                   if (onBack != null) ...[
                     IconButton(
                       onPressed: onBack,
-                      icon: const Icon(Icons.arrow_back),
+                      icon: const DirectionalIcon(
+                          rtl: Icons.arrow_forward, ltr: Icons.arrow_back),
                       color: AppColors.onSecondary,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),

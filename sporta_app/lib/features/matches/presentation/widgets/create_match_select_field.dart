@@ -82,8 +82,9 @@ class CreateMatchSelectField extends StatelessWidget {
           decoration: createMatchInputDecoration(),
           hint: Text(
             hint,
-            style:
-                AppTextStyles.body.copyWith(color: AppColors.mutedForeground),
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.mutedForeground,
+            ),
             overflow: TextOverflow.ellipsis,
           ),
           items: [

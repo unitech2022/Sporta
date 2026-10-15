@@ -4,66 +4,88 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 abstract class AppTextStyles {
+  // سُلَّم الأحجام: نص 14، ثانوي 13، توضيحي 11.5، عناوين 16/18/20.
   static String get brandFontFamily => GoogleFonts.ibmPlexSansArabic().fontFamily!;
 
-  static TextStyle get heading1 => GoogleFonts.ibmPlexSansArabic(
-        fontSize: 24,
-        fontWeight: FontWeight.w500,
-        height: 1.5,
-        color: AppColors.foreground,
-      );
+  /// خط التطبيق لا يحوي الإيموجي فكانت تظهر مربّعاً بعلامة استفهام (أعلام
+  /// اللغة، تفاعلات الدردشة، إيموجي داخل الرسائل) — نُحيلها لخط النظام.
+  static const List<String> emojiFallback = [
+    'Apple Color Emoji',
+    'Noto Color Emoji',
+    'Segoe UI Emoji',
+  ];
 
-  static TextStyle get heading2 => GoogleFonts.ibmPlexSansArabic(
+  static TextStyle _ibm({
+    double? fontSize,
+    FontWeight? fontWeight,
+    double? height,
+    Color? color,
+  }) =>
+      GoogleFonts.ibmPlexSansArabic(
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        height: height,
+        color: color,
+      ).copyWith(fontFamilyFallback: emojiFallback);
+
+  static TextStyle get heading1 => _ibm(
         fontSize: 20,
         fontWeight: FontWeight.w500,
         height: 1.5,
         color: AppColors.foreground,
       );
 
-  static TextStyle get heading3 => GoogleFonts.ibmPlexSansArabic(
+  static TextStyle get heading2 => _ibm(
         fontSize: 18,
         fontWeight: FontWeight.w500,
         height: 1.5,
         color: AppColors.foreground,
       );
 
-  static TextStyle get body => GoogleFonts.ibmPlexSansArabic(
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-        height: 1.5,
-        color: AppColors.foreground,
-      );
-
-  static TextStyle get bodyMedium => GoogleFonts.ibmPlexSansArabic(
+  static TextStyle get heading3 => _ibm(
         fontSize: 16,
         fontWeight: FontWeight.w500,
         height: 1.5,
         color: AppColors.foreground,
       );
 
-  static TextStyle get bodySmall => GoogleFonts.ibmPlexSansArabic(
+  static TextStyle get body => _ibm(
         fontSize: 14,
         fontWeight: FontWeight.w400,
         height: 1.5,
         color: AppColors.foreground,
       );
 
-  static TextStyle get caption => GoogleFonts.ibmPlexSansArabic(
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-        height: 1.5,
-        color: AppColors.mutedForeground,
-      );
-
-  static TextStyle get label => GoogleFonts.ibmPlexSansArabic(
-        fontSize: 16,
+  static TextStyle get bodyMedium => _ibm(
+        fontSize: 14,
         fontWeight: FontWeight.w500,
         height: 1.5,
         color: AppColors.foreground,
       );
 
-  static TextStyle get button => GoogleFonts.ibmPlexSansArabic(
-        fontSize: 16,
+  static TextStyle get bodySmall => _ibm(
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        height: 1.5,
+        color: AppColors.foreground,
+      );
+
+  static TextStyle get caption => _ibm(
+        fontSize: 11.5,
+        fontWeight: FontWeight.w400,
+        height: 1.5,
+        color: AppColors.mutedForeground,
+      );
+
+  static TextStyle get label => _ibm(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        height: 1.5,
+        color: AppColors.foreground,
+      );
+
+  static TextStyle get button => _ibm(
+        fontSize: 15,
         fontWeight: FontWeight.w500,
         height: 1.5,
       );

@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/state/app_scope.dart';
+import '../../../../core/widgets/directional_icon.dart';
 import '../../../../core/widgets/sporta_logo.dart';
 import '../widgets/glass_panel.dart';
 import '../widgets/language_toggle_button.dart';
@@ -14,10 +15,14 @@ class WelcomePage extends StatelessWidget {
     super.key,
     required this.onRegister,
     required this.onLogin,
+    required this.onBrowseAsGuest,
   });
 
   final VoidCallback onRegister;
   final VoidCallback onLogin;
+
+  /// تصفّح بلا حساب — الملاعب والمباريات والمدربين (App Store 5.1.1).
+  final VoidCallback onBrowseAsGuest;
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +87,8 @@ class WelcomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSizes.md),
                 _LoginButton(onTap: onLogin),
+                const SizedBox(height: AppSizes.md),
+                _GuestButton(onTap: onBrowseAsGuest),
                 const SizedBox(height: AppSizes.xxxl),
               ],
             ),
@@ -155,9 +162,35 @@ class _LoginButton extends StatelessWidget {
             style: AppTextStyles.heading3.copyWith(color: Colors.white),
           ),
           const SizedBox(width: AppSizes.md),
-          const Icon(Icons.arrow_back, color: Colors.white,
+          const DirectionalIcon(
+              rtl: Icons.arrow_back,
+              ltr: Icons.arrow_forward,
+              color: Colors.white,
               size: AppSizes.iconMd),
         ],
+      ),
+    );
+  }
+}
+
+class _GuestButton extends StatelessWidget {
+  const _GuestButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: Icon(Icons.visibility_outlined,
+          color: Colors.white.withValues(alpha: 0.85), size: AppSizes.iconSm),
+      label: Text(
+        context.tr('تصفّح بدون تسجيل'),
+        style: AppTextStyles.bodySmall.copyWith(
+          color: Colors.white.withValues(alpha: 0.85),
+          decoration: TextDecoration.underline,
+          decorationColor: Colors.white54,
+        ),
       ),
     );
   }

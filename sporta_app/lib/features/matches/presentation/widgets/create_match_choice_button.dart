@@ -20,8 +20,7 @@ class CreateMatchChoiceButton extends StatelessWidget {
     this.selectedBorderColor = AppColors.primary,
     this.selectedBackground,
     this.selectedForeground = AppColors.primary,
-    this.padding =
-        const EdgeInsetsDirectional.symmetric(vertical: AppSizes.md),
+    this.padding = const EdgeInsetsDirectional.symmetric(vertical: AppSizes.md),
   });
 
   final String label;
@@ -46,8 +45,10 @@ class CreateMatchChoiceButton extends StatelessWidget {
 
     final labelStyle = subLabel == null
         ? AppTextStyles.body.copyWith(color: foreground)
-        : AppTextStyles.bodySmall
-            .copyWith(color: foreground, fontWeight: FontWeight.w500);
+        : AppTextStyles.bodySmall.copyWith(
+            color: foreground,
+            fontWeight: FontWeight.w500,
+          );
 
     return Material(
       color: background,

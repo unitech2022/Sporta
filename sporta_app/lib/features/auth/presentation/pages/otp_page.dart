@@ -1,94 +1,81 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/state/app_scope.dart';
+import '../../data/models/otp_models.dart';
 import '../state/auth_scope.dart';
 import '../widgets/auth_form_fields.dart';
 import '../widgets/circle_back_button.dart';
 import '../widgets/glass_panel.dart';
+import '../../../../core/utils/system_insets.dart';
 
-/// Second step of the password-reset flow: enter the 6-digit OTP sent to the
-/// phone, with a resend countdown.
+/// شاشة إدخال رمز التحقق المُرسل على واتساب. تخدم كل الأغراض:
+/// [OtpPurpose.login] تُنهي الدخول بنفسها وتستدعي [onVerified] بنص فارغ، وبقية
+/// الأغراض تُبدّل الرمز بتذكرة تمرّرها للخطوة التالية.
+///
+/// الإرسال الأول يقع في الشاشة السابقة (هي من تعرف الرقم وتتحقق منه)، ونتيجته
+/// تصل هنا في [initial] — منها مهلة إعادة الإرسال والقناة التي وصل عبرها.
 class OtpPage extends StatefulWidget {
   const OtpPage({
     super.key,
     required this.phone,
+    required this.purpose,
+    required this.initial,
     required this.onVerified,
     required this.onBack,
+    this.rememberMe = true,
   });
 
   final String phone;
-  final ValueChanged<String> onVerified; // passes OTP to next step
+  final OtpPurpose purpose;
+
+  /// نتيجة الإرسال الأول، كما عادت من الشاشة السابقة.
+  final OtpRequested initial;
+
+  /// تُستدعى بعد نجاح التحقق: التذكرة للأغراض التي يليها إجراء، ونصّ فارغ
+  /// لغرض الدخول (فالجلسة تكون قد بدأت فعلاً).
+  final ValueChanged<String> onVerified;
+
   final VoidCallback onBack;
+
+  /// تُمرَّر لتسجيل الدخول وحده.
+  final bool rememberMe;
 
   @override
   State<OtpPage> createState() => _OtpPageState();
 }
 
 class _OtpPageState extends State<OtpPage> {
-  final List<TextEditingController> _controllers =
-      List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _nodes = List.generate(6, (_) => FocusNode());
-  int _resendSeconds = 60;
-  bool _canResend = false;
+  /// عدد الخانات يأتي من الخادم مع نتيجة الإرسال — لا يُثبَّت هنا. تثبيتُه على
+  /// ٦ بينما يرسل المزوّد ٤ يعني شاشةً لا تقبل الرمز الواصل إطلاقاً.
+  late int _length;
+
+  late List<TextEditingController> _controllers;
+  late List<FocusNode> _nodes;
+
+  Timer? _timer;
+  int _resendSeconds = 0;
+
+  /// يمنع تكرار التحقق التلقائي حين يعيد المستخدم تحرير الخانات أثناء الطلب.
+  bool _submitting = false;
 
   @override
   void initState() {
     super.initState();
-    _startResendTimer();
-  }
-
-  void _startResendTimer() {
-    _resendSeconds = 60;
-    _canResend = false;
-    _tick();
-  }
-
-  void _tick() {
-    Future.delayed(const Duration(seconds: 1), () {
-      if (!mounted) return;
-      setState(() {
-        if (_resendSeconds > 1) {
-          _resendSeconds--;
-          _tick();
-        } else {
-          _resendSeconds = 0;
-          _canResend = true;
-        }
-      });
-    });
-  }
-
-  String get _otp => _controllers.map((c) => c.text).join();
-
-  void _onDigitChanged(int index, String value) {
-    if (value.isNotEmpty && index < 5) {
-      _nodes[index + 1].requestFocus();
-    }
-    if (value.isEmpty && index > 0) {
-      _nodes[index - 1].requestFocus();
-    }
-    setState(() {});
-  }
-
-  Future<void> _verify() async {
-    if (_otp.length != 6) return;
-    final ok = await context.auth.verifyOtp(widget.phone, _otp);
-    if (!mounted) return;
-    if (ok) widget.onVerified(_otp);
-  }
-
-  Future<void> _resend() async {
-    if (!_canResend) return;
-    await context.auth.forgotPassword(widget.phone);
-    if (!mounted) return;
-    _startResendTimer();
+    _length = widget.initial.codeLength.clamp(4, 8);
+    _controllers = List.generate(_length, (_) => TextEditingController());
+    _nodes = List.generate(_length, (_) => FocusNode());
+    _startResendTimer(widget.initial.resendAfterSeconds);
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
     for (final c in _controllers) {
       c.dispose();
     }
@@ -96,6 +83,126 @@ class _OtpPageState extends State<OtpPage> {
       n.dispose();
     }
     super.dispose();
+  }
+
+  /// خادم التطوير يعيد الرمز في الردّ، فنملأه ليُختبر المسار بلا رسالة. في
+  /// الإنتاج يعود `null` فلا يحدث شيء.
+  void _startResendTimer(int seconds) {
+    _timer?.cancel();
+    setState(() => _resendSeconds = seconds);
+    if (seconds <= 0) return;
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) return t.cancel();
+      setState(() {
+        _resendSeconds--;
+        if (_resendSeconds <= 0) t.cancel();
+      });
+    });
+  }
+
+  String get _otp => _controllers.map((c) => c.text).join();
+
+  bool get _canResend => _resendSeconds <= 0;
+
+  /// يوزّع ما أُدخل على الخانات. الحالة الشائعة حرف واحد، لكن لصق الرمز كاملاً
+  /// من إشعار واتساب يصل كنصّ في خانة واحدة — فيُفرَّق على ما بعدها.
+  void _onDigitChanged(int index, String value) {
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+
+    if (digits.length > 1) {
+      for (var i = 0; i + index < _length && i < digits.length; i++) {
+        _controllers[index + i].text = digits[i];
+      }
+      final last = (index + digits.length).clamp(0, _length - 1);
+      _nodes[last].requestFocus();
+    } else {
+      _controllers[index].text = digits;
+      if (digits.isNotEmpty && index < _length - 1) {
+        _nodes[index + 1].requestFocus();
+      } else if (digits.isEmpty && index > 0) {
+        _nodes[index - 1].requestFocus();
+      }
+    }
+
+    setState(() {});
+
+    // إكمال الخانات هو نية التحقق — لا معنى لزرٍّ إضافي بعده. الزر يبقى
+    // لمن رجع وعدّل خانة، ولمن فشلت محاولته الأولى.
+    if (_otp.length == _length) {
+      FocusScope.of(context).unfocus();
+      _verify();
+    }
+  }
+
+  Future<void> _verify() async {
+    if (_otp.length != _length || _submitting) return;
+    setState(() => _submitting = true);
+
+    final auth = context.auth;
+    var succeeded = false;
+    try {
+      if (widget.purpose == OtpPurpose.login) {
+        succeeded = await auth.loginWithOtp(
+          phone: widget.phone,
+          otp: _otp,
+          rememberMe: widget.rememberMe,
+        );
+        if (!mounted) return;
+        if (succeeded) widget.onVerified('');
+      } else {
+        final token =
+            await auth.verifyOtpForPurpose(widget.phone, _otp, widget.purpose);
+        if (!mounted) return;
+        succeeded = token != null;
+        if (succeeded) widget.onVerified(token);
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+
+    // فشلت المحاولة: تُفرَّغ الخانات ويعود التركيز لأولها. بدون هذا تبقى
+    // ممتلئة بالرمز الخاطئ، والتحقق التلقائي لا يُعاد إطلاقه لأن الطول مكتمل
+    // أصلاً — فيضطر المستخدم لمسح كل خانة بيده وقد نفدت محاولاته.
+    if (!succeeded && mounted) _clearBoxes();
+  }
+
+  void _clearBoxes() {
+    for (final c in _controllers) {
+      c.clear();
+    }
+    _nodes.first.requestFocus();
+    setState(() {});
+  }
+
+  Future<void> _resend() async {
+    if (!_canResend) return;
+
+    final result = await context.auth.requestOtp(widget.phone, widget.purpose);
+    if (!mounted) return;
+    if (result == null) return;
+
+    setState(() {
+      // قد يعود الطول مختلفاً (رقم اختبار برمز ثابت، أو قالب تغيّر بين
+      // الطلبين)، فتُعاد الخانات بدل تركها على طول لا يقبل ما وصل.
+      final length = result.codeLength.clamp(4, 8);
+      if (length != _length) {
+        for (final c in _controllers) {
+          c.dispose();
+        }
+        for (final n in _nodes) {
+          n.dispose();
+        }
+        _length = length;
+        _controllers = List.generate(_length, (_) => TextEditingController());
+        _nodes = List.generate(_length, (_) => FocusNode());
+      } else {
+        for (final c in _controllers) {
+          c.clear();
+        }
+      }
+    });
+    _nodes.first.requestFocus();
+    _startResendTimer(result.resendAfterSeconds);
   }
 
   @override
@@ -108,10 +215,10 @@ class _OtpPageState extends State<OtpPage> {
         decoration: const BoxDecoration(gradient: AppColors.headerGradient),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
+            padding: context.safeBottom(const EdgeInsets.symmetric(
               horizontal: AppSizes.pagePadding,
               vertical: AppSizes.xxxl,
-            ),
+            )),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -131,7 +238,7 @@ class _OtpPageState extends State<OtpPage> {
                   child: Column(
                     children: [
                       Text(
-                        '${context.tr('otpDesc')} ${widget.phone}',
+                        '${context.trArgs('otpDesc', {'n': '$_length'})} ${widget.phone}',
                         style: AppTextStyles.bodySmall
                             .copyWith(color: Colors.white),
                         textAlign: TextAlign.center,
@@ -162,7 +269,7 @@ class _OtpPageState extends State<OtpPage> {
       textDirection: TextDirection.ltr,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: List.generate(6, (i) {
+        children: List.generate(_length, (i) {
           return SizedBox(
             width: 44,
             height: 54,
@@ -171,14 +278,19 @@ class _OtpPageState extends State<OtpPage> {
               focusNode: _nodes[i],
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
-              maxLength: 1,
+              // خانة واحدة بحدّ أقصى حرف تمنع اللصق؛ نسمح بأكثر ونوزّعه بأنفسنا.
+              maxLength: _length,
+              autofocus: i == 0,
+              autofillHints: const [AutofillHints.oneTimeCode],
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               onChanged: (v) => _onDigitChanged(i, v),
-              style: AppTextStyles.heading2
-                  .copyWith(color: AppColors.secondary),
+              style:
+                  AppTextStyles.heading2.copyWith(color: AppColors.secondary),
               decoration: InputDecoration(
                 counterText: '',
                 fillColor: Colors.white,
                 filled: true,
+                contentPadding: EdgeInsets.zero,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                   borderSide: BorderSide.none,
@@ -212,7 +324,7 @@ class _OtpPageState extends State<OtpPage> {
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: (isLoading || _otp.length != 6) ? null : _verify,
+        onPressed: (isLoading || _otp.length != _length) ? null : _verify,
         child: isLoading
             ? const SizedBox(
                 width: 22,

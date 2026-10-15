@@ -4,11 +4,14 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/localization/app_translations.dart';
+import '../../../../core/state/app_scope.dart';
+import '../../../../core/widgets/directional_icon.dart';
 import '../../../../core/widgets/sporta_logo.dart';
 import '../widgets/circle_back_button.dart';
 
-/// Registration step 1: pick the app language.
-class LanguageSelectionPage extends StatelessWidget {
+/// Registration step 1: pick the app language. Selecting a card only updates
+/// the highlighted choice; the "Next" button confirms it and advances.
+class LanguageSelectionPage extends StatefulWidget {
   const LanguageSelectionPage({
     super.key,
     required this.onSelectLanguage,
@@ -17,6 +20,13 @@ class LanguageSelectionPage extends StatelessWidget {
 
   final ValueChanged<AppLanguage> onSelectLanguage;
   final VoidCallback? onBack;
+
+  @override
+  State<LanguageSelectionPage> createState() => _LanguageSelectionPageState();
+}
+
+class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
+  AppLanguage _selected = AppLanguage.ar;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +39,8 @@ class LanguageSelectionPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: AppSizes.xxxl),
-              if (onBack != null) CircleBackButton(onTap: onBack!, dark: true),
+              if (widget.onBack != null)
+                CircleBackButton(onTap: widget.onBack!, dark: true),
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -38,7 +49,7 @@ class LanguageSelectionPage extends StatelessWidget {
                     Center(child: SportaLogo(width: 128)),
                     SizedBox(height: AppSizes.xxl),
                     Text(
-                      'اختر اللغة',
+                      context.tr('auth.language_selection_page.title'),
                       textAlign: TextAlign.center,
                       style: AppTextStyles.heading1.copyWith(
                         fontSize: 30,
@@ -55,26 +66,41 @@ class LanguageSelectionPage extends StatelessWidget {
                     ),
                     SizedBox(height: AppSizes.sm),
                     Text(
-                      'يمكنك تغيير اللغة في أي وقت من الإعدادات',
+                      context.tr('auth.language_selection_page.subtitle'),
                       textAlign: TextAlign.center,
                       style: AppTextStyles.bodySmall
                           .copyWith(color: AppColors.mutedForeground),
                     ),
                     const SizedBox(height: 48),
                     _LanguageOption(
-                      flag: '🇸🇦',
-                      title: 'العربية',
+                      badge: 'ع',
+                      title: context.tr('العربية'),
                       subtitle: 'Arabic',
-                      selected: true,
-                      onTap: () => onSelectLanguage(AppLanguage.ar),
+                      selected: _selected == AppLanguage.ar,
+                      onTap: () => setState(() => _selected = AppLanguage.ar),
                     ),
                     const SizedBox(height: AppSizes.lg),
                     _LanguageOption(
-                      flag: '🇬🇧',
+                      badge: 'EN',
                       title: 'English',
-                      subtitle: 'الإنجليزية',
-                      selected: false,
-                      onTap: () => onSelectLanguage(AppLanguage.en),
+                      subtitle: context.tr('الإنجليزية'),
+                      selected: _selected == AppLanguage.en,
+                      onTap: () => setState(() => _selected = AppLanguage.en),
+                    ),
+                    const SizedBox(height: AppSizes.xxl),
+                    ElevatedButton(
+                      onPressed: () => widget.onSelectLanguage(_selected),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(context.tr('next')),
+                          DirectionalIcon(
+                            rtl: Icons.chevron_left,
+                            ltr: Icons.chevron_right,
+                            size: AppSizes.iconMd,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -92,7 +118,8 @@ class LanguageSelectionPage extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: AppSizes.sm),
-                    Text('خطوة 1 من 4', style: AppTextStyles.caption),
+                    Text(context.tr('auth.language_selection_page.stepIndicator'),
+                        style: AppTextStyles.caption),
                   ],
                 ),
               ),
@@ -107,14 +134,16 @@ class LanguageSelectionPage extends StatelessWidget {
 
 class _LanguageOption extends StatelessWidget {
   const _LanguageOption({
-    required this.flag,
+    required this.badge,
     required this.title,
     required this.subtitle,
     required this.selected,
     required this.onTap,
   });
 
-  final String flag;
+  /// حرف اللغة داخل دائرة — بدل علم الإيموجي: خط التطبيق لا يحوي الإيموجي
+  /// فكان العلم يظهر مربّعين بعلامة استفهام ويضغط العنوان إلى سطرين.
+  final String badge;
   final String title;
   final String subtitle;
   final bool selected;
@@ -138,13 +167,15 @@ class _LanguageOption extends StatelessWidget {
           padding: const EdgeInsets.all(AppSizes.xxl),
           child: Row(
             children: [
-              Text(flag, style: const TextStyle(fontSize: 36)),
+              _LanguageBadge(label: badge, selected: selected),
               SizedBox(width: AppSizes.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.heading2
                             .copyWith(color: AppColors.secondary)),
                     Text(subtitle, style: AppTextStyles.caption),
@@ -168,6 +199,38 @@ class _LanguageOption extends StatelessWidget {
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// دائرة بحرف اللغة («ع» / «EN»)، تمتلئ بلون التطبيق حين تكون مختارة.
+class _LanguageBadge extends StatelessWidget {
+  const _LanguageBadge({required this.label, required this.selected});
+
+  final String label;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: 52,
+      height: 52,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: selected
+            ? AppColors.primary
+            : AppColors.primary.withValues(alpha: 0.1),
+      ),
+      child: Text(
+        label,
+        style: AppTextStyles.heading3.copyWith(
+          color: selected ? Colors.white : AppColors.primary,
+          fontWeight: FontWeight.w700,
+          height: 1,
         ),
       ),
     );

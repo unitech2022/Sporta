@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../auth/data/models/api_exception.dart';
 import '../../data/level_repository.dart';
+import '../../domain/level_question.dart';
 
 part 'level_state.dart';
 
@@ -13,9 +14,22 @@ class LevelCubit extends Cubit<LevelState> {
 
   final LevelRepository _repository;
 
-  /// Initialises the answers list for [questionCount] questions.
-  void init(int questionCount) =>
-      emit(state.copyWith(answers: List<int?>.filled(questionCount, null)));
+  /// Loads the admin-defined questions for [sport] and prepares the answers.
+  Future<void> loadQuestions(String sport, {bool isArabic = true}) async {
+    emit(state.copyWith(status: LevelStatus.loading, error: null));
+    try {
+      final questions = await _repository.fetchQuestions(sport);
+      emit(state.copyWith(
+        status: LevelStatus.answering,
+        questions: questions,
+        answers: List<int?>.filled(questions.length, null),
+        index: 0,
+      ));
+    } on ApiException catch (e) {
+      emit(state.copyWith(
+          status: LevelStatus.failure, error: e.display));
+    }
+  }
 
   /// Records the chosen option [score] for the current question.
   void selectAnswer(int score) {
@@ -54,7 +68,7 @@ class LevelCubit extends Cubit<LevelState> {
     } on ApiException catch (e) {
       emit(state.copyWith(
         status: LevelStatus.answering,
-        error: e.localized(isArabic),
+        error: e.display,
       ));
     }
   }

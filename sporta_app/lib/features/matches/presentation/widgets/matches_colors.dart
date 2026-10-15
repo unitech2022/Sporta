@@ -40,6 +40,10 @@ abstract class MatchesColors {
   static const Color purple500 = Color(0xFFA855F7);
   static const Color purple600 = Color(0xFF9333EA);
 
+  // Pink
+  static const Color pink100 = Color(0xFFFCE7F3);
+  static const Color pink600 = Color(0xFFDB2777);
+
   // Teal / cyan
   static const Color teal50 = Color(0xFFF0FDFA);
   static const Color teal100 = Color(0xFFCCFBF1);

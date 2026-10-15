@@ -6,6 +6,7 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/state/app_scope.dart';
 import '../../../../core/state/app_settings.dart';
 import '../../domain/entities/registration_data.dart';
+import '../../../../core/localization/tr_global.dart';
 
 /// Registration step 3: review the selected roles before submitting.
 class SummaryStep extends StatelessWidget {
@@ -13,10 +14,10 @@ class SummaryStep extends StatelessWidget {
 
   final RegistrationData data;
 
-  static const _roleDetails = {
-    UserRole.player: 'تفضيلات اللعب وتحديد المستوى (لاعب)',
-    UserRole.coach: 'الشهادات والتخصصات والتسعير (مدرب)',
-    UserRole.venue: 'تفاصيل الملعب والمرافق والأسعار (ملعب)',
+  static Map<UserRole, String> get _roleDetails => {
+    UserRole.player: trg('تفضيلات اللعب وتحديد المستوى (لاعب)'),
+    UserRole.coach: trg('الشهادات والتخصصات والتسعير (مدرب)'),
+    UserRole.venue: trg('تفاصيل الملعب والمرافق والأسعار (ملعب)'),
   };
 
   @override
@@ -25,7 +26,7 @@ class SummaryStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'معلومات إضافية',
+          context.tr('auth.summary_step.title'),
           style: AppTextStyles.heading1.copyWith(color: AppColors.secondary),
         ),
         const SizedBox(height: AppSizes.xxl),
@@ -49,7 +50,7 @@ class SummaryStep extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                'الأدوار المختارة:',
+                context.tr('auth.summary_step.selectedRoles'),
                 style:
                     AppTextStyles.body.copyWith(color: AppColors.secondary),
               ),
@@ -94,7 +95,7 @@ class SummaryStep extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'ستتمكن من إكمال المعلومات التفصيلية لكل دور بعد إنشاء الحساب',
+                context.tr('auth.summary_step.completeDetailsLater'),
                 style:
                     AppTextStyles.body.copyWith(color: AppColors.secondary),
               ),
@@ -131,7 +132,7 @@ class SummaryStep extends StatelessWidget {
             border: Border.all(color: AppColors.border),
           ),
           child: Text(
-            'ℹ️ يمكنك التبديل بين الأدوار في أي وقت من القائمة الرئيسية',
+            'ℹ️ ${context.tr('auth.summary_step.switchRolesHint')}',
             style: AppTextStyles.caption,
           ),
         ),
